@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
-import { postcodeValidator } from "postcode-validator";
 import Users from "../models/Users";
 
 type TUserUpdates = {
