@@ -60,6 +60,10 @@ function removeUser(socketId: string) {
   ));
 }
 
+app.get("/", (req, res, next) => {
+  res.send("HEllo");
+});
+
 io.on("connection", (socket) => {
   socket.on("user-connect", (data) => {
     getActiveUsers({
