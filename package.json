@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --watch \"src/**/*.ts\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node\" src/server.ts"
+    "dev": "nodemon --max-old-space-size=4096 --watch \"src/**/*.ts\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node\" src/server.ts"
   },
   "keywords": [],
   "author": "",
