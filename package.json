@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.ts",
+  "type": "commonjs",
   "scripts": {
     "dev": "nodemon --watch \"src/**/*.ts\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node\" src/server.ts"
   },

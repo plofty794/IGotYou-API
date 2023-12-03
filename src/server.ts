@@ -142,10 +142,6 @@ io.on("connection", (socket) => {
 //   })
 // );
 
-app.get("/", (req, res, next) => {
-  res.json({ message: "Hello" });
-});
-
 app.use(cookieParser());
 app.use(cors({ origin: [env.CLIENT_URL, env.ADMIN_URL], credentials: true }));
 app.use(express.json());
