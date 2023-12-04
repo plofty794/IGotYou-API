@@ -86,8 +86,8 @@ export const getListingsPerCategory: RequestHandler = async (
 
     const categorizedListings = await Listings.find({
       serviceType: category,
-      availableAt: { $lte: new Date() },
-      endsAt: { $gte: new Date() },
+      availableAt: { $lte: new Date().getTime() },
+      endsAt: { $gte: new Date().getTime() },
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -95,7 +95,7 @@ export const getListingsPerCategory: RequestHandler = async (
         path: "host",
         match: {
           subscriptionExpiresAt: {
-            $gte: new Date(),
+            $gte: new Date().getTime(),
           },
         },
       })

@@ -2,21 +2,6 @@ import { Schema, InferSchemaType, model, Types } from "mongoose";
 import env from "../utils/envalid";
 import bcrypt from "bcrypt";
 
-const wishlistsSchema = new Schema(
-  {
-    wishlistTitle: {
-      type: String,
-      required: true,
-    },
-    wishlistContent: {
-      type: [Types.ObjectId],
-      ref: "Listings",
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
 const ratingSchema = new Schema(
   {
     userRating: {
@@ -114,7 +99,8 @@ const usersSchema = new Schema(
     },
     // Other details
     wishlists: {
-      type: [wishlistsSchema],
+      type: [Types.ObjectId],
+      ref: "Listings",
     },
     notifications: {
       type: [Types.ObjectId],
