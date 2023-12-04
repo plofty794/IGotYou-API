@@ -42,8 +42,8 @@ export const sendMessage = async (data: any) => {
     const senderID = await Users.findOne({ username: data.senderName });
 
     const messageExist = await Messages.findOne({
-      $function: function () {
-        return this.receiverID.messages === this.senderID.messages;
+      $expr: {
+        $eq: ["$receiverID.messages", "$senderID.messages"],
       },
     });
 

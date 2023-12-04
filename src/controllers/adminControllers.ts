@@ -15,11 +15,8 @@ export const getActiveUsers: RequestHandler = async (req, res, next) => {
     const totalActiveUsers = await Users.countDocuments();
     const totalPages = Math.ceil(totalActiveUsers / limit);
     const activeUsers = await Users.find({
-      $function: function () {
-        return (
-          this.subscriptionStatus === "active" && this.userStatus == "host"
-        );
-      },
+      subscriptionStatus: "active",
+      userStatus: "host",
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -46,12 +43,14 @@ export const getUsers: RequestHandler = async (req, res, next) => {
     const totalUsers = await Users.countDocuments();
     const totalPages = Math.ceil(totalUsers / limit);
     const users = await Users.find({
-      $function: function () {
-        return (
-          this.subscriptionStatus === "pending" ||
-          this.subscriptionStatus === "active"
-        );
-      },
+      $or: [
+        {
+          subscriptionStatus: "pending",
+        },
+        {
+          subscriptionStatus: "active",
+        },
+      ],
     })
       .skip((page - 1) * limit)
       .limit(limit)

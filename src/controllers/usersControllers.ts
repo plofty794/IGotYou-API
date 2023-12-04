@@ -172,9 +172,7 @@ export const getCurrentUserProfile: RequestHandler = async (req, res, next) => {
 
     const activeListings = await Listings.find({
       host: user._id,
-      $function: function () {
-        return new Date(this.endsAt).getTime() >= Date.now();
-      },
+      endsAt: { $gte: new Date() },
     });
 
     res.status(200).json({ user, activeListings });
