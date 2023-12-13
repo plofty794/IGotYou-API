@@ -5,6 +5,23 @@ import Users from "../models/Users";
 import { addDays } from "date-fns";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
 import Notifications from "../models/Notifications";
+import { createTransport } from "nodemailer";
+import env from "../utils/envalid";
+
+const transport = createTransport({
+  service: "gmail",
+  auth: {
+    user: "aceguevarra48@gmail.com",
+    pass: env.APP_PASSWORD,
+  },
+});
+
+const mailDetails = {
+  from: "aceguevarra48@gmail.com",
+  to: "aceguevarra48@gmail.com",
+  subject: "Test mail",
+  text: "Node.js testing mail for GeeksforGeeks",
+};
 
 export const getVerifiedPayments: RequestHandler = async (req, res, next) => {
   const admin_id = req.cookies.admin_id;
@@ -147,6 +164,7 @@ export const sendPaymentNotificationStatus = async (data: any) => {
     notificationType: "Subscription-Status",
     toUserID: userID?._id,
     fromAdmin: data.adminID,
+    paymentStatus: data.status,
   });
 
   await newNotification.populate({

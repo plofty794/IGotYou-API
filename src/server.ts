@@ -14,8 +14,9 @@ import {
   sendBookingRequest,
   updateBookingRequestNotification,
 } from "./controllers/bookingsControllers";
-import { sendMessage } from "./controllers/messagesControllers";
+import { sendMessage } from "./controllers/conversationsControllers";
 import { sendPaymentNotificationStatus } from "./controllers/paymentControllers";
+import { conversationRoutes } from "./routes/conversationRoutes";
 
 const app = express();
 const server = app
@@ -79,8 +80,7 @@ io.on("connection", (socket) => {
       const res = await sendMessage(data);
       io.to(activeUser.socketId).emit("receive-message", res);
     } else {
-      const res = await sendMessage(data);
-      console.log(res);
+      await sendMessage(data);
     }
   });
 
@@ -92,6 +92,8 @@ io.on("connection", (socket) => {
         const res = await updateBookingRequestNotification(data);
         io.to(activeUserGuest.socketId).emit("pong", res?.guestNotification);
         io.to(activeUserHost.socketId).emit("res", res);
+      } else {
+        await updateBookingRequestNotification(data);
       }
     } catch (error) {
       console.error(error);
@@ -159,4 +161,5 @@ app.use("/api", listingRoutes);
 app.use("/api", assetRoutes);
 app.use("/api", adminRoutes);
 app.use("/api", paymentRoutes);
+app.use("/api", conversationRoutes);
 app.use(errorHandler);

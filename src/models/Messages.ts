@@ -1,23 +1,5 @@
 import { Schema, model, Types, InferSchemaType } from "mongoose";
 
-const repliesSchema = new Schema(
-  {
-    content: {
-      type: String,
-      required: true,
-    },
-    senderID: {
-      type: Types.ObjectId,
-      ref: "Users",
-    },
-    read: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { timestamps: true }
-);
-
 const messagesSchema = new Schema(
   {
     content: {
@@ -29,12 +11,6 @@ const messagesSchema = new Schema(
       ref: "Users",
       required: true,
     },
-    receiverID: {
-      type: Types.ObjectId,
-      ref: "Users",
-      required: true,
-    },
-    replies: [repliesSchema],
   },
   { timestamps: true }
 );

@@ -12,4 +12,5 @@ export default cleanEnv(process.env, {
   CLOUDINARY_API_SECRET: str(),
   CLIENT_URL: url(),
   ADMIN_URL: url(),
+  APP_PASSWORD: str(),
 });

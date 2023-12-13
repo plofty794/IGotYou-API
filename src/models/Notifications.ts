@@ -14,6 +14,10 @@ const notificationSchema = new Schema(
       type: Types.ObjectId,
       ref: "Users",
     },
+    paymentStatus: {
+      type: String,
+      enum: ["reject", "success"],
+    },
     notificationType: {
       type: String,
       enum: [
