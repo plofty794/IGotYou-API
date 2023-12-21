@@ -11,6 +11,10 @@ const messagesSchema = new Schema(
       ref: "Users",
       required: true,
     },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

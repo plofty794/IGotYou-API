@@ -45,6 +45,11 @@ const usersSchema = new Schema(
     password: {
       type: String,
     },
+    identityVerified: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     mobileVerified: {
       type: Boolean,
       default: false,
@@ -84,6 +89,10 @@ const usersSchema = new Schema(
     rating: {
       type: [ratingSchema],
     },
+    identityVerificationStatus: {
+      type: String,
+      enum: ["pending", "success", "reject"],
+    },
     subscriptionStatus: {
       type: String,
       enum: ["pending", "active", "expired", "reject"],
@@ -95,22 +104,22 @@ const usersSchema = new Schema(
     subscriptionExpiresAt: {
       type: Date,
     },
+    hostNotifications: {
+      type: [Types.ObjectId],
+      ref: "HostNotifications",
+    },
     // Other details
     wishlists: {
       type: [Types.ObjectId],
       ref: "Listings",
     },
-    notifications: {
+    guestNotifications: {
       type: [Types.ObjectId],
-      ref: "Notifications",
+      ref: "GuestNotifications",
     },
     bookingRequests: {
       type: [Types.ObjectId],
       ref: "BookingRequests",
-    },
-    conversation: {
-      type: [Types.ObjectId],
-      ref: "Conversations",
     },
   },
   { timestamps: true }

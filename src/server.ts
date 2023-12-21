@@ -15,8 +15,9 @@ import {
   updateBookingRequestNotification,
 } from "./controllers/bookingsControllers";
 import { sendMessage } from "./controllers/conversationsControllers";
-import { sendPaymentNotificationStatus } from "./controllers/paymentControllers";
 import { conversationRoutes } from "./routes/conversationRoutes";
+import { notificationRoutes } from "./routes/notificationRoutes";
+import { identityRoutes } from "./routes/identityPhotoRoutes";
 
 const app = express();
 const server = app
@@ -116,18 +117,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("update-payment-status", async (data) => {
-    const activeUser = findActiveUser(data.username);
-    if (activeUser) {
-      const res = await sendPaymentNotificationStatus(data);
-      io.to(activeUser.socketId).emit("pong", {
-        notifications: res?.newNotification,
-      });
-    } else {
-      await sendPaymentNotificationStatus(data);
-    }
-  });
-
   socket.on("disconnect", () => {
     console.log("user disconnected");
     removeUser(socket.id);
@@ -162,4 +151,6 @@ app.use("/api", assetRoutes);
 app.use("/api", adminRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api", conversationRoutes);
+app.use("/api", notificationRoutes);
+app.use("/api", identityRoutes);
 app.use(errorHandler);

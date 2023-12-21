@@ -4,9 +4,12 @@ import createHttpError from "http-errors";
 import Users from "../models/Users";
 import { addDays } from "date-fns";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
-import Notifications from "../models/Notifications";
+import Notifications from "../models/GuestNotifications";
 import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
+import { emailPaymentSuccess } from "../utils/emails/emailPaymentSuccess";
+import { emailPaymentReject } from "../utils/emails/emailPaymentReject";
+import { emailSubscriptionRequest } from "../utils/emails/emailSubscriptionRequest";
 
 const transport = createTransport({
   service: "gmail",
@@ -15,13 +18,6 @@ const transport = createTransport({
     pass: env.APP_PASSWORD,
   },
 });
-
-const mailDetails = {
-  from: "aceguevarra48@gmail.com",
-  to: "aceguevarra48@gmail.com",
-  subject: "Test mail",
-  text: "Node.js testing mail for GeeksforGeeks",
-};
 
 export const getVerifiedPayments: RequestHandler = async (req, res, next) => {
   const admin_id = req.cookies.admin_id;
@@ -85,7 +81,11 @@ export const getPendingPayments: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const sendPaymentProof: RequestHandler = async (req, res, next) => {
+export const sendSubscriptionPayment: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
   const id = req.cookies["_&!d"];
   try {
     if (!id) {
@@ -94,13 +94,27 @@ export const sendPaymentProof: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
-    const paymentProof = await (
-      await Payments.create({ ...req.body, paymentStatus: "pending", user: id })
-    ).populate("user");
-    const updatedUserSubscription = await Users.findByIdAndUpdate(id, {
+
+    const payment = await Payments.create({ ...req.body, user: id });
+
+    await payment.populate({ path: "user", select: ["username", "email"] });
+
+    const user = await Users.findByIdAndUpdate(id, {
       ...req.body,
     });
-    res.status(201).json({ paymentProof, updatedUserSubscription });
+
+    await transport.sendMail({
+      from: user?.email,
+      to: "aceguevarra48@gmail.com",
+      subject: "IGotYou - Subscription Request",
+      html: emailSubscriptionRequest(
+        user?.username!,
+        user?.email!,
+        new Date(payment?.createdAt!).toLocaleString()
+      ),
+    });
+
+    res.status(201).json({ message: "Success" });
   } catch (error) {
     next(error);
   }
@@ -111,7 +125,7 @@ type TPaymentStatus = {
   _id: string;
 };
 
-export const updatePaymentProofStatus: RequestHandler = async (
+export const updateSubscriptionPhotosStatus: RequestHandler = async (
   req,
   res,
   next
@@ -133,12 +147,25 @@ export const updatePaymentProofStatus: RequestHandler = async (
       const updatedUserSubscription = await Users.findByIdAndUpdate(
         paymentSuccess?.user,
         {
+          identityVerified: true,
           subscriptionStatus: "active",
           subscriptionExpiresAt: addDays(Date.now(), 30),
           userStatus: "host",
-        }
+        },
+        { new: true }
       );
-      return res.status(200).json({ paymentSuccess, updatedUserSubscription });
+      await transport.sendMail({
+        from: "aceguevarra48@gmail.com",
+        to: updatedUserSubscription?.email,
+        subject: "IGotYou - Subscription Payment Update",
+        html: emailPaymentSuccess(
+          updatedUserSubscription?.username!,
+          new Date(
+            updatedUserSubscription?.subscriptionExpiresAt!
+          ).toDateString()
+        ),
+      });
+      return res.status(200).json({ paymentSuccess });
     }
     if (paymentStatus === "reject") {
       const paymentReject = await Payments.findByIdAndUpdate(_id, {
@@ -148,35 +175,24 @@ export const updatePaymentProofStatus: RequestHandler = async (
         paymentReject?.user,
         {
           subscriptionStatus: "reject",
-        }
+        },
+        { new: true }
       );
-      return res.status(200).json({ paymentReject, updatedUserSubscription });
+      await transport.sendMail({
+        from: "aceguevarra48@gmail.com",
+        to: updatedUserSubscription?.email,
+        subject: "IGotYou - Subscription Payment Update",
+        html: emailPaymentReject(
+          updatedUserSubscription?.username!,
+          new Date(
+            updatedUserSubscription?.subscriptionExpiresAt!
+          ).toDateString()
+        ),
+      });
+
+      return res.status(200).json({ paymentReject });
     }
   } catch (error) {
     next(error);
   }
-};
-
-export const sendPaymentNotificationStatus = async (data: any) => {
-  const userID = await Users.findOne({ username: data.username });
-  console.log(data);
-  const newNotification = await Notifications.create({
-    notificationType: "Subscription-Status",
-    toUserID: userID?._id,
-    fromAdmin: data.adminID,
-    paymentStatus: data.status,
-  });
-
-  await newNotification.populate({
-    select: ["username", "photoUrl"],
-    path: "fromAdmin",
-  });
-
-  await userID?.updateOne({
-    $push: {
-      notifications: newNotification._id,
-    },
-  });
-
-  return { newNotification };
 };

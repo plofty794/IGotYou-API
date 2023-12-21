@@ -4,6 +4,7 @@ import {
   deleteConversation,
   getCurrentUserConversation,
   getCurrentUserConversations,
+  readMessage,
 } from "../controllers/conversationsControllers";
 import { authToken } from "../middlewares/authToken";
 const router = Router();
@@ -22,6 +23,11 @@ router.post(
   "/users/current-user/conversations/create",
   authToken,
   createConversation
+);
+router.patch(
+  "/users/current-user/conversations/read-message/:messageId",
+  authToken,
+  readMessage
 );
 router.delete(
   "/users/current-user/conversations/delete/:conversationId",

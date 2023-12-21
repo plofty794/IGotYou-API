@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import BookingRequests from "../models/BookingRequests";
 import Listings from "../models/Listings";
-import Notifications from "../models/Notifications";
+import Notifications from "../models/GuestNotifications";
 import Users from "../models/Users";
 import Reservations from "../models/Reservations";
 

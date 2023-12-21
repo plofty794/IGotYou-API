@@ -4,7 +4,7 @@ import Users from "../models/Users";
 import createHttpError from "http-errors";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
 import Listings from "../models/Listings";
-import Notifications from "../models/Notifications";
+
 import BookingRequests from "../models/BookingRequests";
 import { getAuth } from "firebase-admin/auth";
 
@@ -87,64 +87,6 @@ export const getUserPhone: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "No account with that id");
     }
     res.status(200).json({ user: { mobilePhone: user.mobilePhone } });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getCurrentUserNotifications: RequestHandler = async (
-  req,
-  res,
-  next
-) => {
-  const id = req.cookies["_&!d"];
-  try {
-    if (!id) {
-      res.clearCookie("_&!d");
-      throw createHttpError(
-        400,
-        "A _id cookie is required to access this resource."
-      );
-    }
-
-    const userNotifications = await Notifications.find({ toUserID: id })
-      .populate([
-        { select: ["username", "photoUrl"], path: "fromAdmin" },
-        { select: ["username", "photoUrl"], path: "fromUserID" },
-        { select: ["username", "photoUrl"], path: "toUserID" },
-        {
-          path: "bookingRequest",
-          populate: "listingID",
-        },
-      ])
-      .sort({ createdAt: "desc" })
-      .exec();
-
-    res.status(200).json({ notifications: userNotifications });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateNotification: RequestHandler = async (req, res, next) => {
-  const id = req.cookies["_&!d"];
-  const { notificationID } = req.body;
-  try {
-    if (!id) {
-      res.clearCookie("_&!d");
-      throw createHttpError(
-        400,
-        "A _id cookie is required to access this resource."
-      );
-    }
-    const updateNotification = await Notifications.findByIdAndUpdate(
-      notificationID,
-      {
-        read: true,
-      }
-    );
-
-    res.status(201).json({ updateNotification });
   } catch (error) {
     next(error);
   }

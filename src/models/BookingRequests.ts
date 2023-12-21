@@ -1,4 +1,4 @@
-import { Schema, InferSchemaType, model, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 const bookingRequestsSchema = new Schema(
   {
@@ -24,7 +24,7 @@ const bookingRequestsSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "declined"],
+      enum: ["pending", "approved", "declined", "cancelled"],
       default: "pending",
     },
     listingID: {
