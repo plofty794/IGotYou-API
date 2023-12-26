@@ -77,6 +77,21 @@ export const sendBookingRequest = async (data: TSendBookingRequest) => {
   try {
     const guestID = await Users.findOne({ username: data.guestName });
 
+    const bookingDateIsReserved = await Reservations.findOne({
+      $and: [
+        {
+          bookingStartsAt: { $lte: data.date.to }, //dec. 5 - dec. 8 (dec.6 - dec. 7)
+        },
+        {
+          bookingEndsAt: { $gte: data.date.from },
+        },
+      ],
+    });
+
+    if (bookingDateIsReserved) {
+      return { bookingDateIsReserved: true };
+    }
+
     const newBookingRequest = await BookingRequests.create({
       ...data,
       requestedBookingDateStartsAt: data.date.from,

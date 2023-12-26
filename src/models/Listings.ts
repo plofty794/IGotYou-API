@@ -15,21 +15,6 @@ const listingPhotosSchema = new Schema({
   },
 });
 
-const reservationSchema = new Schema({
-  isReserved: {
-    type: Boolean,
-    default: false,
-  },
-  from: {
-    type: Date,
-    required: true,
-  },
-  to: {
-    type: Date,
-    required: true,
-  },
-});
-
 const listingSchema = new Schema(
   {
     serviceType: {
@@ -73,8 +58,10 @@ const listingSchema = new Schema(
       type: String,
       required: true,
     },
-    reservedDates: {
-      type: [reservationSchema],
+    cancellationPolicy: {
+      type: String,
+      enum: ["Flexible", "Moderate", "Strict"],
+      required: true,
     },
   },
   { timestamps: true }

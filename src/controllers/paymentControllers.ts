@@ -36,9 +36,14 @@ export const getVerifiedPayments: RequestHandler = async (req, res, next) => {
     const verifiedPayments = await Payments.find({
       paymentStatus: "success",
     })
+      .sort({ createdAt: "desc" })
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("user")
+      .populate({
+        path: "user",
+        select:
+          "email username subscriptionExpiresAt identityVerified emailVerified mobileVerified",
+      })
       .exec();
 
     if (!verifiedPayments.length) {
@@ -67,6 +72,7 @@ export const getPendingPayments: RequestHandler = async (req, res, next) => {
     const pendingPayments = await Payments.find({
       paymentStatus: "pending",
     })
+      .sort({ createdAt: "desc" })
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("user")
@@ -123,6 +129,45 @@ export const sendSubscriptionPayment: RequestHandler = async (
 type TPaymentStatus = {
   paymentStatus: "success" | "pending" | "reject";
   _id: string;
+};
+
+export const searchUsernameVerifiedPayment: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  const admin_id = req.cookies.admin_id;
+  const { username } = req.params;
+  let searchOptions = {
+    username: new RegExp("", "gi"),
+  };
+  if (username != null) {
+    searchOptions.username = new RegExp(`${username}`, "gi");
+  }
+  try {
+    if (!admin_id) {
+      res.clearCookie("admin_id");
+      throw createHttpError(
+        401,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const user = await Users.findOne(searchOptions);
+
+    const verifiedPayments = await Payments.find({
+      paymentStatus: "success",
+      user: user?._id,
+    }).populate({
+      path: "user",
+      select:
+        "email username subscriptionExpiresAt identityVerified emailVerified mobileVerified",
+    });
+
+    res.status(200).json({ verifiedPayments });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const updateSubscriptionPhotosStatus: RequestHandler = async (

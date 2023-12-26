@@ -97,10 +97,6 @@ const usersSchema = new Schema(
       type: String,
       enum: ["pending", "active", "expired", "reject"],
     },
-    reservations: {
-      type: [Types.ObjectId],
-      ref: "Reservations",
-    },
     subscriptionExpiresAt: {
       type: Date,
     },

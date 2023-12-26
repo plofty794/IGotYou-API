@@ -5,7 +5,7 @@ import Listings from "../models/Listings";
 import Users from "../models/Users";
 import createHttpError from "http-errors";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
-import { add } from "date-fns";
+import { add, compareAsc, compareDesc } from "date-fns";
 
 cloudinary.v2.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -23,6 +23,38 @@ type TListing = {
   serviceType: string;
   serviceDescription?: string;
   listingPhotos: TFileType[];
+};
+
+export const getHostListings: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const limit = 10;
+  const page = parseInt(req.params.page ?? "1") ?? 1;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const hostListings = await Listings.find({
+      host: id,
+    })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: "desc" })
+      .exec();
+
+    const totalPages = Math.ceil(hostListings.length / limit);
+
+    if (!hostListings.length) {
+      return res.status(200).json({ hostListings: [], totalPages: 0 });
+    }
+
+    res.status(200).json({ hostListings, totalPages });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getListings: RequestHandler = async (req, res, next) => {
@@ -51,7 +83,7 @@ export const getListings: RequestHandler = async (req, res, next) => {
           },
         },
       })
-      .sort({ created_At: "desc" })
+      .sort({ createdAt: "desc" })
       .exec();
 
     const totalPages = Math.ceil(listings.length / limit);
@@ -162,7 +194,7 @@ export const addListing: RequestHandler = async (req, res, next) => {
       },
       { new: true }
     );
-    res.status(200).json({ newListing });
+    res.status(200).json({ newListingID: newListing._id });
   } catch (error) {
     next(error);
   }

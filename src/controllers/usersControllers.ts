@@ -269,7 +269,6 @@ export const searchUsername: RequestHandler = async (req, res, next) => {
   if (username != null) {
     searchOptions.username = new RegExp(`^${username}`, "gi");
   }
-
   try {
     if (!id) {
       res.clearCookie("_&!d");
@@ -279,15 +278,9 @@ export const searchUsername: RequestHandler = async (req, res, next) => {
       );
     }
 
-    const currentUser = await Users.findById(id);
-
     const userDetails = await Users.find(searchOptions)
       .select("username _id photoUrl email")
       .exec();
-
-    if (!userDetails) {
-      throw createHttpError(400, "No User Found");
-    }
 
     res.status(200).json({ userDetails });
   } catch (error) {
@@ -299,11 +292,14 @@ export const checkUserEmail: RequestHandler = async (req, res, next) => {
   const { email } = req.body;
   try {
     if (!email) {
-      throw createHttpError(400, "No data to be processed");
+      throw createHttpError(400, "No data to be processed.");
     }
     const user = await Users.findOne({ email: email });
     if (!user) {
-      throw createHttpError(400, "No user with that email");
+      throw createHttpError(400, "No user with that email.");
+    }
+    if (!user.emailVerified) {
+      throw createHttpError(400, "Email is not verified.");
     }
     res.status(200).json({ email: user.email });
   } catch (error) {

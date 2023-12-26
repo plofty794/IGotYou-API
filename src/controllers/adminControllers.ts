@@ -40,35 +40,25 @@ export const getUsers: RequestHandler = async (req, res, next) => {
     if (!admin_id) {
       throw createHttpError(401, "This action requires an identifier");
     }
-    const totalUsers = await Users.countDocuments();
-    const totalPages = Math.ceil(totalUsers / limit);
+
     const users = await Users.find({
-      $or: [
-        {
-          subscriptionStatus: "pending",
-        },
-        {
-          subscriptionStatus: "active",
-        },
-      ],
+      username: { $ne: null },
     })
+      .select(
+        "username email userStatus emailVerified identityVerified mobilePhone mobileVerified createdAt"
+      )
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("listings")
       .sort({ createdAt: "desc" })
       .exec();
+
+    const totalUsers = await Users.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
+
     if (!users.length) {
       return res.status(200).json({ users: [], totalPages: 0 });
     }
-    const _users = users.map((user) => ({
-      uid: user.uid,
-      email: user.email,
-      username: user.username,
-      subscription_status: user.subscriptionStatus,
-      user_status: user.userStatus,
-      listings: user.listings.length,
-    }));
-    res.status(200).json({ users: _users, totalPages });
+    res.status(200).json({ users, totalPages, totalUsers });
   } catch (error) {
     next(error);
   }
