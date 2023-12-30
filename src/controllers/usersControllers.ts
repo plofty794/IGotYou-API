@@ -36,41 +36,6 @@ import { getAuth } from "firebase-admin/auth";
 //   }
 // };
 
-export const getBookingRequests: RequestHandler = async (req, res, next) => {
-  const id = req.cookies["_&!d"];
-  const limit = 10;
-  const page = parseInt(req.params.page ?? "1") ?? 1;
-  try {
-    if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
-    }
-
-    const user = await Users.findById(id);
-
-    if (!user) {
-      throw createHttpError(400, "No user with that id");
-    }
-
-    const bookingRequests = await BookingRequests.find({ guestID: user._id })
-      .sort({ createdAt: "desc" })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate([{ path: "listingID" }, { select: "username", path: "hostID" }])
-      .exec();
-
-    const totalPages = Math.ceil(bookingRequests.length / limit);
-
-    res.status(200).json({ bookingRequests, totalPages });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const getUserPhone: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   try {

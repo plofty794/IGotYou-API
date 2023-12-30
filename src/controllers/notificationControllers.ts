@@ -21,11 +21,9 @@ export const getGuestNotifications: RequestHandler = async (req, res, next) => {
       .sort({ createdAt: "desc" })
       .exec();
 
-    res
-      .status(200)
-      .json({
-        guestNotifications: guestNotifications.map((v) => v.notificationType),
-      });
+    res.status(200).json({
+      guestNotifications: guestNotifications.map((v) => v.notificationType),
+    });
   } catch (error) {
     next(error);
   }
@@ -41,12 +39,12 @@ export const getHostNotifications: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
+
     const hostNotifications = await HostNotifications.find({ recipientID: id })
       .populate([
-        { select: ["username", "photoUrl"], path: "fromGuestID" },
-        { select: ["username", "photoUrl"], path: "toHostID" },
+        { select: ["username"], path: "senderID" },
         {
-          path: "bookingRequest",
+          path: "data",
           populate: "listingID",
         },
       ])

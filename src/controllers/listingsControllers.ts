@@ -5,7 +5,7 @@ import Listings from "../models/Listings";
 import Users from "../models/Users";
 import createHttpError from "http-errors";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
-import { add, compareAsc, compareDesc } from "date-fns";
+import { addDays } from "date-fns";
 
 cloudinary.v2.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -19,12 +19,6 @@ type TFileType = {
   original_filename: string;
 };
 
-type TListing = {
-  serviceType: string;
-  serviceDescription?: string;
-  listingPhotos: TFileType[];
-};
-
 export const getHostListings: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const limit = 10;
@@ -36,6 +30,15 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
+
+    await Listings.updateMany(
+      {
+        endsAt: {
+          $lte: new Date(),
+        },
+      },
+      { status: "Ended" }
+    );
 
     const hostListings = await Listings.find({
       host: id,
@@ -72,6 +75,7 @@ export const getListings: RequestHandler = async (req, res, next) => {
     const listings = await Listings.find({
       availableAt: { $lte: new Date() },
       endsAt: { $gte: new Date() },
+      status: "Active",
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -118,8 +122,8 @@ export const getListingsPerCategory: RequestHandler = async (
 
     const categorizedListings = await Listings.find({
       serviceType: category,
-      availableAt: { $lte: new Date().getTime() },
-      endsAt: { $gte: new Date().getTime() },
+      availableAt: { $lte: new Date() },
+      endsAt: { $gte: new Date() },
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -127,7 +131,7 @@ export const getListingsPerCategory: RequestHandler = async (
         path: "host",
         match: {
           subscriptionExpiresAt: {
-            $gte: new Date().getTime(),
+            $gte: new Date(),
           },
         },
       })
@@ -150,7 +154,10 @@ export const getUserListing: RequestHandler = async (req, res, next) => {
     if (!id) {
       throw createHttpError(400, "Invalid listing id");
     }
-    const listing = await Listings.findById(id).populate("host");
+    const listing = await Listings.findById(id).populate({
+      path: "host",
+      select: "username photoUrl rating subscriptionExpiresAt",
+    });
     res.status(200).json({ listing });
   } catch (error) {
     next(error);
@@ -159,7 +166,6 @@ export const getUserListing: RequestHandler = async (req, res, next) => {
 
 export const addListing: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
-
   try {
     if (!id) {
       clearCookieAndThrowError(
@@ -171,11 +177,7 @@ export const addListing: RequestHandler = async (req, res, next) => {
     const newListing = await Listings.create({
       ...req.body,
       availableAt: new Date(req.body.date.from),
-      endsAt: add(new Date(req.body.date.to), {
-        hours: new Date(req.body.date.from).getHours(),
-        minutes: new Date(req.body.date.from).getMinutes(),
-        seconds: new Date(req.body.date.from).getSeconds(),
-      }),
+      endsAt: new Date(req.body.date.to),
       host: id,
     });
 
@@ -195,6 +197,72 @@ export const addListing: RequestHandler = async (req, res, next) => {
       { new: true }
     );
     res.status(200).json({ newListingID: newListing._id });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const renewListing: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { listingID } = req.params;
+  const { listingDuration } = req.body;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await Listings.findByIdAndUpdate(listingID, {
+      availableAt: new Date().setHours(0, 0, 0, 0),
+      endsAt: addDays(new Date().setHours(0, 0, 0, 0), listingDuration),
+      status: "Active",
+    });
+
+    res.status(201).json({ message: "Listing has been renewed" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const disableListing: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { listingID } = req.params;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await Listings.findByIdAndUpdate(listingID, {
+      status: "Inactive",
+    });
+
+    res.status(201).json({ message: "Listing has been disabled." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const enableListing: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { listingID } = req.params;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await Listings.findByIdAndUpdate(listingID, {
+      status: "Active",
+    });
+
+    res.status(201).json({ message: "Listing has been enabled." });
   } catch (error) {
     next(error);
   }

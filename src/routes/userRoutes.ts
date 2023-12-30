@@ -12,7 +12,6 @@ import {
   visitUserProfile,
   // userSubscription,
   checkUserEmail,
-  getBookingRequests,
   searchUsername,
   updateUserEmail,
   addListingToWishlist,
@@ -26,7 +25,6 @@ router.get("/users/current-user/phone", authToken, getUserPhone);
 router.get("/users/current-user/wishlists", authToken, getWishlists);
 router.get("/users/search/:username", authToken, searchUsername);
 router.get("/users/profile/visit/:id", authToken, visitUserProfile);
-router.get("/users/booking-requests/:page", authToken, getBookingRequests);
 router.get("/users/current-user/profile", authToken, getCurrentUserProfile);
 router.post("/users/login", logInUser);
 router.post("/users/email-check", authToken, checkUserEmail);

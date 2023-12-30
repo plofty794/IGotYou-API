@@ -10,15 +10,12 @@ import { assetRoutes } from "./routes/assetRoutes";
 import { adminRoutes } from "./routes/adminRoutes";
 import { paymentRoutes } from "./routes/paymentRoutes";
 import { Server } from "socket.io";
-import {
-  sendBookingRequest,
-  updateBookingRequestNotification,
-} from "./controllers/bookingsControllers";
 import { sendMessage } from "./controllers/conversationsControllers";
 import { conversationRoutes } from "./routes/conversationRoutes";
 import { notificationRoutes } from "./routes/notificationRoutes";
 import { identityRoutes } from "./routes/identityPhotoRoutes";
 import { reservationRoutes } from "./routes/reservationRoutes";
+import { bookingRequestRoutes } from "./routes/bookingRequestRoutes";
 
 const app = express();
 const server = app
@@ -86,35 +83,14 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("host-update-bookingRequest", async (data) => {
-    const activeUserGuest = findActiveUser(data.guestID.username);
-    const activeUserHost = findActiveUser(data.hostID.username);
-    try {
-      if (activeUserGuest != null && activeUserHost != null) {
-        const res = await updateBookingRequestNotification(data);
-        io.to(activeUserGuest.socketId).emit("pong", res?.guestNotification);
-        io.to(activeUserHost.socketId).emit("res", res);
-      } else {
-        await updateBookingRequestNotification(data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  });
-
-  socket.on("send-bookingRequest", async (data) => {
-    try {
-      const activeUser = findActiveUser(data.hostName);
-      if (activeUser) {
-        const res = await sendBookingRequest(data);
-        io.to(activeUser.socketId).emit("pong", {
-          notifications: res?.newNotification,
-        });
-      } else {
-        await sendBookingRequest(data);
-      }
-    } catch (error) {
-      console.log(error);
+  socket.on("send-bookingRequest", (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    console.log(data);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit(
+        "send-hostNotification",
+        data.newHostNotification
+      );
     }
   });
 
@@ -155,4 +131,5 @@ app.use("/api", conversationRoutes);
 app.use("/api", notificationRoutes);
 app.use("/api", identityRoutes);
 app.use("/api", reservationRoutes);
+app.use("/api", bookingRequestRoutes);
 app.use(errorHandler);
