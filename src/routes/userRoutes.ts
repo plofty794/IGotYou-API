@@ -14,25 +14,27 @@ import {
   checkUserEmail,
   searchUsername,
   updateUserEmail,
-  addListingToWishlist,
+  updateWishlist,
   getWishlists,
+  verifyEmail,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
+import { passwordResetLimiter } from "../utils/limiters";
 
 router.get("/users/current-user/phone", authToken, getUserPhone);
-
 router.get("/users/current-user/wishlists", authToken, getWishlists);
-router.get("/users/search/:username", authToken, searchUsername);
+router.get("/users/search-user/:username", authToken, searchUsername);
 router.get("/users/profile/visit/:id", authToken, visitUserProfile);
 router.get("/users/current-user/profile", authToken, getCurrentUserProfile);
 router.post("/users/login", logInUser);
-router.post("/users/email-check", authToken, checkUserEmail);
 router.post(
-  "/users/current-user/add-listing-wishlist",
+  "/users/email-check",
   authToken,
-  addListingToWishlist
+  passwordResetLimiter,
+  checkUserEmail
 );
+router.post("/users/current-user/update-wishlist", authToken, updateWishlist);
 router.post("/users/login/google", googleSignIn);
 router.post("/users/register", createUser);
 router.patch(
@@ -41,8 +43,8 @@ router.patch(
   verifyUserUpdates,
   updateUser
 );
+router.patch("/users/current-user/verify-email", authToken, verifyEmail);
 router.patch("/users/current-user/update-email", authToken, updateUserEmail);
-
 router.delete("/users/current-user/logout", logOutUser);
 router.delete("/users/:id", deleteUser);
 

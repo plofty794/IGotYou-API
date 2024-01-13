@@ -23,8 +23,7 @@ export const getCurrentReservations: RequestHandler = async (
     const currentReservations = await Reservations.find({
       hostID: id,
       bookingStarts: {
-        $gte: new Date().setHours(0, 0, 0, 0),
-        $lt: addDays(new Date(), 1),
+        $eq: new Date().setHours(0, 0, 0, 0),
       },
     })
       .populate([

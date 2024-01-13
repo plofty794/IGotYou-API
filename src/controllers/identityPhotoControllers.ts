@@ -104,13 +104,13 @@ export const updatePendingIdentityVerificationRequest: RequestHandler = async (
   res,
   next
 ) => {
-  const id = req.cookies["_&!d"];
+  const admin_id = req.cookies.admin_id;
   const { identityPhotoId } = req.params;
   try {
-    if (!id) {
+    if (!admin_id) {
       clearCookieAndThrowError(
         res,
-        "A _id cookie is required to access this resource."
+        "A admin_id cookie is required to access this resource."
       );
     }
 

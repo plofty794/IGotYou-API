@@ -1,6 +1,6 @@
 import { Schema, Types, model } from "mongoose";
 
-const paymentsSchema = new Schema(
+const subscriptionPaymentsSchema = new Schema(
   {
     paymentProofPhoto: {
       type: String,
@@ -17,5 +17,8 @@ const paymentsSchema = new Schema(
   { timestamps: true }
 );
 
-const Payments = model("Payments", paymentsSchema);
-export default Payments;
+const SubscriptionPayments = model(
+  "SubscriptionPayments",
+  subscriptionPaymentsSchema
+);
+export default SubscriptionPayments;

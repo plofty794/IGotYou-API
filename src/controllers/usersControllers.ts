@@ -120,6 +120,7 @@ export const getWishlists: RequestHandler = async (req, res, next) => {
       .select("wishlists")
       .populate({
         path: "wishlists",
+        select: ["listingAssets", "host", "serviceDescription", "serviceType"],
         populate: {
           path: "host",
           select: "username",
@@ -132,7 +133,7 @@ export const getWishlists: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const addListingToWishlist: RequestHandler = async (req, res, next) => {
+export const updateWishlist: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { listingID } = req.body;
   try {
@@ -166,7 +167,12 @@ export const addListingToWishlist: RequestHandler = async (req, res, next) => {
     }
 
     await Users.findByIdAndUpdate(id, {
-      $push: { wishlists: listingID },
+      $push: {
+        wishlists: {
+          $each: [listingID],
+          $position: 0,
+        },
+      },
     });
 
     res
@@ -187,12 +193,32 @@ export const updateUser: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
-
     const user = await Users.findByIdAndUpdate(id, { ...req.body });
     if (!user) {
       throw createHttpError(400, "Error updating user");
     }
     res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyEmail: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { emailVerified } = req.body;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+    await Users.findByIdAndUpdate(id, {
+      emailVerified,
+    });
+
+    res.status(200).json({ message: "Email status has been updated" });
   } catch (error) {
     next(error);
   }
@@ -219,7 +245,7 @@ export const updateUserEmail: RequestHandler = async (req, res, next) => {
       emailVerified: userRecord.emailVerified,
     });
 
-    res.status(201).json({ updateUser });
+    res.status(201).json({ updatedUser });
   } catch (error) {
     next(error);
   }
@@ -228,12 +254,6 @@ export const updateUserEmail: RequestHandler = async (req, res, next) => {
 export const searchUsername: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { username } = req.params;
-  let searchOptions = {
-    username: new RegExp("", "gi"),
-  };
-  if (username != null) {
-    searchOptions.username = new RegExp(`^${username}`, "gi");
-  }
   try {
     if (!id) {
       res.clearCookie("_&!d");
@@ -243,7 +263,12 @@ export const searchUsername: RequestHandler = async (req, res, next) => {
       );
     }
 
-    const userDetails = await Users.find(searchOptions)
+    const userDetails = await Users.find({
+      username: {
+        $regex: username,
+        $options: "mi",
+      },
+    })
       .select("username _id photoUrl email")
       .exec();
 
@@ -257,7 +282,7 @@ export const checkUserEmail: RequestHandler = async (req, res, next) => {
   const { email } = req.body;
   try {
     if (!email) {
-      throw createHttpError(400, "No data to be processed.");
+      throw createHttpError(400, "Email is required");
     }
     const user = await Users.findOne({ email: email });
     if (!user) {

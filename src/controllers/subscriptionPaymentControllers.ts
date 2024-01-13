@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import Payments from "../models/Payments";
+import SubscriptionPayments from "../models/SubscriptionPayments";
 import createHttpError from "http-errors";
 import Users from "../models/Users";
 import { addDays } from "date-fns";
@@ -31,9 +31,9 @@ export const getVerifiedPayments: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
-    const totalPayments = await Payments.countDocuments();
+    const totalPayments = await SubscriptionPayments.countDocuments();
     const totalPages = Math.ceil(totalPayments / limit);
-    const verifiedPayments = await Payments.find({
+    const verifiedPayments = await SubscriptionPayments.find({
       paymentStatus: "success",
     })
       .sort({ createdAt: "desc" })
@@ -67,9 +67,9 @@ export const getPendingPayments: RequestHandler = async (req, res, next) => {
         "A _id cookie is required to access this resource."
       );
     }
-    const totalPayments = await Payments.countDocuments();
+    const totalPayments = await SubscriptionPayments.countDocuments();
     const totalPages = Math.ceil(totalPayments / limit);
-    const pendingPayments = await Payments.find({
+    const pendingPayments = await SubscriptionPayments.find({
       paymentStatus: "pending",
     })
       .sort({ createdAt: "desc" })
@@ -101,7 +101,10 @@ export const sendSubscriptionPayment: RequestHandler = async (
       );
     }
 
-    const payment = await Payments.create({ ...req.body, user: id });
+    const payment = await SubscriptionPayments.create({
+      ...req.body,
+      user: id,
+    });
 
     await payment.populate({ path: "user", select: ["username", "email"] });
 
@@ -155,7 +158,7 @@ export const searchUsernameVerifiedPayment: RequestHandler = async (
 
     const user = await Users.findOne(searchOptions);
 
-    const verifiedPayments = await Payments.find({
+    const verifiedPayments = await SubscriptionPayments.find({
       paymentStatus: "success",
       user: user?._id,
     }).populate({
@@ -186,7 +189,7 @@ export const updateSubscriptionPhotosStatus: RequestHandler = async (
       );
     }
     if (paymentStatus === "success") {
-      const paymentSuccess = await Payments.findByIdAndUpdate(_id, {
+      const paymentSuccess = await SubscriptionPayments.findByIdAndUpdate(_id, {
         ...req.body,
       });
       const updatedUserSubscription = await Users.findByIdAndUpdate(
@@ -213,7 +216,7 @@ export const updateSubscriptionPhotosStatus: RequestHandler = async (
       return res.status(200).json({ paymentSuccess });
     }
     if (paymentStatus === "reject") {
-      const paymentReject = await Payments.findByIdAndUpdate(_id, {
+      const paymentReject = await SubscriptionPayments.findByIdAndUpdate(_id, {
         paymentStatus: "reject",
       });
       const updatedUserSubscription = await Users.findByIdAndUpdate(

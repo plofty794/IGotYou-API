@@ -8,9 +8,8 @@ import { userRoutes } from "./routes/userRoutes";
 import { listingRoutes } from "./routes/listingRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { adminRoutes } from "./routes/adminRoutes";
-import { paymentRoutes } from "./routes/paymentRoutes";
+import { subscriptionPaymentRoutes } from "./routes/subscriptionPaymentRoutes";
 import { Server } from "socket.io";
-import { sendMessage } from "./controllers/conversationsControllers";
 import { conversationRoutes } from "./routes/conversationRoutes";
 import { notificationRoutes } from "./routes/notificationRoutes";
 import { identityRoutes } from "./routes/identityPhotoRoutes";
@@ -76,16 +75,19 @@ io.on("connection", (socket) => {
   socket.on("chat-message", async (data) => {
     const activeUser = findActiveUser(data.receiverName);
     if (activeUser) {
-      const res = await sendMessage(data);
-      io.to(activeUser.socketId).emit("receive-message", res);
-    } else {
-      await sendMessage(data);
+      io.to(activeUser.socketId).emit("receive-message", data.conversationID);
+    }
+  });
+
+  socket.on("message-host", async (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit("receive-message", data.conversationID);
     }
   });
 
   socket.on("send-bookingRequest", (data) => {
     const activeUser = findActiveUser(data.receiverName);
-    console.log(data);
     if (activeUser) {
       io.to(activeUser.socketId).emit(
         "send-hostNotification",
@@ -126,7 +128,7 @@ app.use("/api", userRoutes);
 app.use("/api", listingRoutes);
 app.use("/api", assetRoutes);
 app.use("/api", adminRoutes);
-app.use("/api", paymentRoutes);
+app.use("/api", subscriptionPaymentRoutes);
 app.use("/api", conversationRoutes);
 app.use("/api", notificationRoutes);
 app.use("/api", identityRoutes);

@@ -60,8 +60,17 @@ const usersSchema = new Schema(
     address: {
       type: String,
     },
-    school: {
+    educationalAttainment: {
       type: String,
+      enum: [
+        "high school diploma",
+        "associate's degree",
+        "bachelor's degree",
+        "master's degree",
+        "doctorate",
+        "professional license",
+        "no formal education",
+      ],
     },
     funFact: {
       type: String,
@@ -108,6 +117,10 @@ const usersSchema = new Schema(
     wishlists: {
       type: [Types.ObjectId],
       ref: "Listings",
+      createdAt: {
+        type: Date,
+        default: Date.now(),
+      },
     },
     guestNotifications: {
       type: [Types.ObjectId],

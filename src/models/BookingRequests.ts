@@ -31,6 +31,21 @@ const bookingRequestsSchema = new Schema(
       type: Types.ObjectId,
       ref: "Listings",
     },
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+    declineReasons: {
+      type: String,
+      enum: [
+        "unverified identity",
+        "maintenance/upkeep",
+        "mismatched expectations",
+        "safety concerns",
+        "no reviews",
+        "negative reviews",
+      ],
+    },
   },
   { timestamps: true }
 );

@@ -4,10 +4,15 @@ import {
   getIdentityVerificationRequests,
   updatePendingIdentityVerificationRequest,
 } from "../controllers/identityPhotoControllers";
+import { sendIdentityVerificationRequestLimiter } from "../utils/limiters";
 const router = Router();
 
 router.get("/identity-photo/pending", getIdentityVerificationRequests);
-router.post("/identity-photo/verification", sendIdentityVerificationRequest);
+router.post(
+  "/identity-photo/verification",
+  sendIdentityVerificationRequestLimiter,
+  sendIdentityVerificationRequest
+);
 router.patch(
   "/identity-photo/verification/:identityPhotoId",
   updatePendingIdentityVerificationRequest

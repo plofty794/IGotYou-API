@@ -5,7 +5,8 @@ import Listings from "../models/Listings";
 import Users from "../models/Users";
 import createHttpError from "http-errors";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
-import { addDays } from "date-fns";
+import { addDays, compareAsc } from "date-fns";
+import Reservations from "../models/Reservations";
 
 cloudinary.v2.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -149,12 +150,21 @@ export const getListingsPerCategory: RequestHandler = async (
 };
 
 export const getUserListing: RequestHandler = async (req, res, next) => {
-  const { id } = req.params;
+  const id = req.cookies["_&!d"];
+  const { listingID } = req.params;
   try {
     if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    if (!listingID) {
       throw createHttpError(400, "Invalid listing id");
     }
-    const listing = await Listings.findById(id).populate({
+
+    const listing = await Listings.findById(listingID).populate({
       path: "host",
       select: "username photoUrl rating subscriptionExpiresAt",
     });
@@ -179,6 +189,13 @@ export const addListing: RequestHandler = async (req, res, next) => {
       availableAt: new Date(req.body.date.from),
       endsAt: new Date(req.body.date.to),
       host: id,
+      status:
+        compareAsc(
+          new Date(req.body.date.from),
+          new Date().setHours(0, 0, 0, 0)
+        ) > 0
+          ? "Inactive"
+          : "Active",
     });
 
     await newListing.populate({ path: "host", select: "email" });
@@ -235,6 +252,14 @@ export const disableListing: RequestHandler = async (req, res, next) => {
         res,
         "A _id cookie is required to access this resource."
       );
+    }
+
+    const hasReservations = await Reservations.find({ listingID });
+
+    if (hasReservations.length) {
+      return res.status(409).json({
+        error: "This listing cannot be disabled as reservations exist",
+      });
     }
 
     await Listings.findByIdAndUpdate(listingID, {
