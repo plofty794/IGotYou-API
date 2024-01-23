@@ -4,8 +4,6 @@ import Users from "../models/Users";
 import createHttpError from "http-errors";
 import { clearCookieAndThrowError } from "../utils/clearCookieAndThrowError";
 import Listings from "../models/Listings";
-
-import BookingRequests from "../models/BookingRequests";
 import { getAuth } from "firebase-admin/auth";
 
 // export const getHosts: RequestHandler = async (req, res, next) => {
@@ -68,7 +66,7 @@ export const getCurrentUserProfile: RequestHandler = async (req, res, next) => {
       );
     }
     const user = await Users.findById(id)
-      .populate(["listings", "bookingRequests"])
+      .populate("rating")
       .select("-password")
       .exec();
 
@@ -120,7 +118,7 @@ export const getWishlists: RequestHandler = async (req, res, next) => {
       .select("wishlists")
       .populate({
         path: "wishlists",
-        select: ["listingAssets", "host", "serviceDescription", "serviceType"],
+        select: ["listingAssets", "host", "serviceTitle", "serviceType"],
         populate: {
           path: "host",
           select: "username",
@@ -177,7 +175,7 @@ export const updateWishlist: RequestHandler = async (req, res, next) => {
 
     res
       .status(201)
-      .json({ message: "Success", listingName: listing.serviceDescription });
+      .json({ message: "Success", listingName: listing.serviceTitle });
   } catch (error) {
     next(error);
   }

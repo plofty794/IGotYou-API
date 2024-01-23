@@ -6,6 +6,10 @@ import Users from "../models/Users";
 import HostNotifications from "../models/HostNotifications";
 import Listings from "../models/Listings";
 import createHttpError from "http-errors";
+import GuestNotifications from "../models/GuestNotifications";
+import { createTransport } from "nodemailer";
+import env from "../utils/envalid";
+import { emailBookingRequestAccepted } from "../utils/emails/emailBookingRequestAccepted";
 
 type TBookingRequest = {
   hostID: string;
@@ -33,7 +37,7 @@ export const getBookingRequestDetails: RequestHandler = async (
         {
           path: "guestID",
           select:
-            "username email photoUrl emailVerified identityVerified mobileVerified mobilePhone",
+            "username email photoUrl emailVerified identityVerified mobileVerified mobilePhone educationalAttainment address work funFact mobilePhone userStatus",
         },
         {
           path: "listingID",
@@ -69,19 +73,22 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
 
     const listingIsActive = await Listings.findOne({
       _id: listingID,
-      status: "Active",
+      $or: [
+        {
+          status: "Active",
+        },
+        { status: "Inactive" },
+      ],
     });
 
     if (!listingIsActive) {
-      throw createHttpError(400, "Listing is not active");
+      throw createHttpError(400, "Listing has been disabled by the host");
     }
 
     const bookingRequestAlreadyExist = await BookingRequests.findOne({
       guestID: id,
       hostID,
       listingID,
-      requestedBookingDateStartsAt,
-      requestedBookingDateEndsAt,
     });
 
     if (bookingRequestAlreadyExist) {
@@ -144,12 +151,10 @@ export const getGuestBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const bookingRequests = await BookingRequests.find({ guestID: id })
@@ -177,12 +182,10 @@ export const getHostBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const bookingRequests = await BookingRequests.find({ hostID: id })
@@ -213,12 +216,10 @@ export const getGuestApprovedBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const approvedBookingRequests = await BookingRequests.find({
@@ -248,12 +249,10 @@ export const searchGuestBookingRequest: RequestHandler = async (
   const { search } = req.query;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const bookingRequest = await BookingRequests.find({
@@ -296,12 +295,10 @@ export const getGuestPendingBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const pendingBookingRequests = await BookingRequests.find({
@@ -332,12 +329,10 @@ export const getGuestDeclinedBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const declinedBookingRequests = await BookingRequests.find({
@@ -368,12 +363,10 @@ export const getGuestCancelledBookingRequests: RequestHandler = async (
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
-      if (!id) {
-        clearCookieAndThrowError(
-          res,
-          "A _id cookie is required to access this resource."
-        );
-      }
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
     }
 
     const cancelledBookingRequests = await BookingRequests.find({
@@ -389,6 +382,71 @@ export const getGuestCancelledBookingRequests: RequestHandler = async (
     const totalPages = Math.ceil(cancelledBookingRequests.length / limit);
 
     res.status(200).json({ cancelledBookingRequests, totalPages });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { bookingRequestID } = req.params;
+  const { receiverName } = req.body;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const approvedBookingRequests = await BookingRequests.findByIdAndUpdate(
+      bookingRequestID,
+      {
+        status: "approved",
+      },
+      {
+        new: true,
+      }
+    ).populate({ path: "guestID", select: "email username" });
+
+    const newReservation = await Reservations.create({
+      guestID: approvedBookingRequests?.guestID,
+      hostID: id,
+      bookingStartsAt: approvedBookingRequests?.requestedBookingDateStartsAt,
+      bookingEndsAt: approvedBookingRequests?.requestedBookingDateEndsAt,
+    });
+
+    await Listings.findByIdAndUpdate(approvedBookingRequests?.listingID, {
+      $push: {
+        reservedDates: newReservation?._id,
+      },
+    });
+
+    await GuestNotifications.create({
+      senderID: id,
+      recipientID: approvedBookingRequests?.guestID,
+      data: approvedBookingRequests?._id,
+      notificationType: "Booking-Approved",
+    });
+
+    await transport.sendMail({
+      to: (approvedBookingRequests?.guestID as { email: string }).email,
+      subject: "Booking Request Update",
+      html: emailBookingRequestAccepted(
+        (approvedBookingRequests?.guestID as { username: string }).username
+      ),
+    });
+
+    res
+      .status(201)
+      .json({ bookingRequestID: approvedBookingRequests?._id, receiverName });
   } catch (error) {
     next(error);
   }

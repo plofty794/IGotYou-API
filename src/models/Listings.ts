@@ -71,7 +71,7 @@ const listingSchema = new Schema(
     },
     cancellationPolicy: {
       type: String,
-      enum: ["Flexible", "Moderate", "Strict"],
+      enum: ["Flexible", "Moderate", "Strict", "Non-refundable"],
       required: true,
     },
     reservedDates: {
@@ -80,7 +80,7 @@ const listingSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Inactive", "Ended"],
+      enum: ["Active", "Inactive", "Ended", "Disabled"],
       default: "Active",
     },
   },

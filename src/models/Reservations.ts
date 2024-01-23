@@ -18,13 +18,37 @@ const reservationsSchema = new Schema(
       type: Date,
       required: true,
     },
-    message: {
-      type: String,
-      required: true,
-    },
     listingID: {
       type: Types.ObjectId,
       ref: "Listings",
+    },
+    paymentStatus: {
+      type: String,
+      enum: [
+        "pending",
+        "fully-paid",
+        "partially-paid",
+        "refunded",
+        "cancelled",
+      ],
+      default: "pending",
+      required: true,
+    },
+    paymentAmount: {
+      type: Number,
+      required: true,
+    },
+    partialPaymentDate: {
+      type: Date,
+    },
+    fullPaymentDate: {
+      type: Date,
+    },
+    paymentRefundDate: {
+      type: Date,
+    },
+    balance: {
+      type: Number,
     },
   },
   { timestamps: true }

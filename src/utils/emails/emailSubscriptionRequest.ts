@@ -9,14 +9,16 @@ export const emailSubscriptionRequest = (
 <head></head>
 
 <body style="background-color:#f6f9fc;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Roboto,&quot;Helvetica Neue&quot;,Ubuntu,sans-serif">
-  <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" width="100%" style="max-width:37.5em;background-color:#ffffff;margin:0 auto;padding:20px 0 48px;margin-bottom:64px">
+  <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" width="100%" style="max-width:45em;background-color:#ffffff;margin:0 auto;padding:20px 0 48px;margin-bottom:64px">
     <tr style="width:100%">
       <td>
         <table style="padding:0 48px" align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%">
           <tbody>
             <tr>
-              <td><img alt="IGotYou" src="https://uploads.turbologo.com/uploads/icon/preview_image/2880304/draw_svg20200612-15006-1ioouzj.svg.png" width="60" height="60" style="display:block;outline:none;border:none;text-decoration:none" />
+              <td>
+              <img alt="IGotYou" src="https://uploads.turbologo.com/uploads/icon/preview_image/2880304/draw_svg20200612-15006-1ioouzj.svg.png" width="60" height="60" style="display:block;outline:none;border:none;text-decoration:none" />
                 <hr style="width:100%;border:none;border-top:1px solid #eaeaea;border-color:#e6ebf1;margin:20px 0" />
+                <h2 style="font-size:18px;line-height:24px;margin:16px 0;color:#525f7f;text-align:left">Subscription Payment Verification Request</h2>
                 <p style="font-size:16px;line-height:24px;margin:16px 0;color:#525f7f;text-align:left">A new user has requested to subscribe to your hosting plan.</p>
                 <p style="font-size:16px;line-height:24px;margin:16px 0;color:#525f7f;text-align:left">Time: ${sentAt}</p>
                 <p style="font-size:16px;line-height:24px;margin:16px 0;color:#525f7f;text-align:left">User details:</p>

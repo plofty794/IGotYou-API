@@ -41,6 +41,16 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
       { status: "Ended" }
     );
 
+    await Listings.updateMany(
+      {
+        availableAt: {
+          $lte: new Date(),
+        },
+        status: "Inactive",
+      },
+      { status: "Active" }
+    );
+
     const hostListings = await Listings.find({
       host: id,
     })
@@ -73,10 +83,19 @@ export const getListings: RequestHandler = async (req, res, next) => {
       );
     }
 
+    await Listings.updateMany(
+      {
+        availableAt: {
+          $lte: new Date(),
+        },
+        status: "Inactive",
+      },
+      { status: "Active" }
+    );
+
     const listings = await Listings.find({
-      availableAt: { $lte: new Date() },
       endsAt: { $gte: new Date() },
-      status: "Active",
+      $or: [{ status: "Active" }, { status: "Inactive" }],
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -123,8 +142,8 @@ export const getListingsPerCategory: RequestHandler = async (
 
     const categorizedListings = await Listings.find({
       serviceType: category,
-      availableAt: { $lte: new Date() },
       endsAt: { $gte: new Date() },
+      $or: [{ status: "Active" }, { status: "Inactive" }],
     })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -263,7 +282,7 @@ export const disableListing: RequestHandler = async (req, res, next) => {
     }
 
     await Listings.findByIdAndUpdate(listingID, {
-      status: "Inactive",
+      status: "Disabled",
     });
 
     res.status(201).json({ message: "Listing has been disabled." });
@@ -281,6 +300,21 @@ export const enableListing: RequestHandler = async (req, res, next) => {
         res,
         "A _id cookie is required to access this resource."
       );
+    }
+
+    const listingInactive = await Listings.findOne({
+      _id: listingID,
+      availableAt: {
+        $gt: new Date(),
+      },
+    });
+
+    if (listingInactive) {
+      await Listings.findByIdAndUpdate(listingID, {
+        status: "Inactive",
+      });
+
+      return res.status(201).json({ message: "Listing has been updated." });
     }
 
     await Listings.findByIdAndUpdate(listingID, {

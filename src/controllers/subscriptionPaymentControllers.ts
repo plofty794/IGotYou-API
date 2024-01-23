@@ -11,14 +11,6 @@ import { emailPaymentSuccess } from "../utils/emails/emailPaymentSuccess";
 import { emailPaymentReject } from "../utils/emails/emailPaymentReject";
 import { emailSubscriptionRequest } from "../utils/emails/emailSubscriptionRequest";
 
-const transport = createTransport({
-  service: "gmail",
-  auth: {
-    user: "aceguevarra48@gmail.com",
-    pass: env.APP_PASSWORD,
-  },
-});
-
 export const getVerifiedPayments: RequestHandler = async (req, res, next) => {
   const admin_id = req.cookies.admin_id;
   const limit = 10;
@@ -93,6 +85,13 @@ export const sendSubscriptionPayment: RequestHandler = async (
   next
 ) => {
   const id = req.cookies["_&!d"];
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
   try {
     if (!id) {
       clearCookieAndThrowError(
@@ -180,6 +179,13 @@ export const updateSubscriptionPhotosStatus: RequestHandler = async (
 ) => {
   const admin_id = req.cookies.admin_id;
   const { paymentStatus, _id }: TPaymentStatus = req.body;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
   try {
     if (!admin_id) {
       res.clearCookie("admin_id");

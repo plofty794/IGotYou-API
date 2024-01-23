@@ -1,4 +1,4 @@
-import { cleanEnv, num, port, str, url } from "envalid";
+import { cleanEnv, email, num, port, str, url } from "envalid";
 import { config } from "dotenv";
 
 config();
@@ -13,4 +13,5 @@ export default cleanEnv(process.env, {
   CLIENT_URL: url(),
   ADMIN_URL: url(),
   APP_PASSWORD: str(),
+  ADMIN_EMAIL: email(),
 });

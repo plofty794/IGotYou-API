@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  acceptBookingRequest,
   getBookingRequestDetails,
   getGuestApprovedBookingRequests,
   getGuestBookingRequests,
@@ -43,10 +44,15 @@ router.get(
   getGuestCancelledBookingRequests
 );
 router.post(
-  "/guest-send-booking-requests/:listingID",
+  "/guest-send-booking-request/:listingID",
   authToken,
   sendBookingRequestLimiter,
   sendBookingRequest
+);
+router.post(
+  "/host-send-booking-request-update/:bookingRequestID",
+  authToken,
+  acceptBookingRequest
 );
 
 export { router as bookingRequestRoutes };

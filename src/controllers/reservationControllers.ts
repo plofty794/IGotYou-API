@@ -1,7 +1,6 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import Reservations from "../models/Reservations";
-import { addDays } from "date-fns";
 
 export const getCurrentReservations: RequestHandler = async (
   req,
@@ -22,7 +21,7 @@ export const getCurrentReservations: RequestHandler = async (
 
     const currentReservations = await Reservations.find({
       hostID: id,
-      bookingStarts: {
+      bookingStartsAt: {
         $eq: new Date().setHours(0, 0, 0, 0),
       },
     })
@@ -64,7 +63,7 @@ export const getUpcomingReservations: RequestHandler = async (
 
     const upcomingReservations = await Reservations.find({
       hostID: id,
-      bookingStarts: {
+      bookingStartsAt: {
         $gt: new Date(),
       },
     })

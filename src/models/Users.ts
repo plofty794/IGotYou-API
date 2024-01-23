@@ -91,10 +91,6 @@ const usersSchema = new Schema(
       enum: ["host", "guest"],
       default: "guest",
     },
-    listings: {
-      type: [Types.ObjectId],
-      ref: "Listings",
-    },
     rating: {
       type: [ratingSchema],
     },
@@ -109,26 +105,10 @@ const usersSchema = new Schema(
     subscriptionExpiresAt: {
       type: Date,
     },
-    hostNotifications: {
-      type: [Types.ObjectId],
-      ref: "HostNotifications",
-    },
     // Other details
     wishlists: {
       type: [Types.ObjectId],
       ref: "Listings",
-      createdAt: {
-        type: Date,
-        default: Date.now(),
-      },
-    },
-    guestNotifications: {
-      type: [Types.ObjectId],
-      ref: "GuestNotifications",
-    },
-    bookingRequests: {
-      type: [Types.ObjectId],
-      ref: "BookingRequests",
     },
   },
   { timestamps: true }

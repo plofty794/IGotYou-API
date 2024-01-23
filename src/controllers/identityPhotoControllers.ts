@@ -6,14 +6,7 @@ import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
 import { emailIdentityVerificationRequest } from "../utils/emails/emailIdentityVerificationRequest";
 import createHttpError from "http-errors";
-
-const transport = createTransport({
-  service: "gmail",
-  auth: {
-    user: "aceguevarra48@gmail.com",
-    pass: env.APP_PASSWORD,
-  },
-});
+import { emailIdentityVerificationRequestUpdate } from "../utils/emails/emailIdentityVerificationUpdate";
 
 export const getIdentityVerificationRequests: RequestHandler = async (
   req,
@@ -59,6 +52,15 @@ export const sendIdentityVerificationRequest: RequestHandler = async (
   next
 ) => {
   const id = req.cookies["_&!d"];
+
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+
   try {
     if (!id) {
       clearCookieAndThrowError(
@@ -83,7 +85,6 @@ export const sendIdentityVerificationRequest: RequestHandler = async (
     });
 
     await transport.sendMail({
-      from: user?.email,
       to: "aceguevarra48@gmail.com",
       subject: "IGotYou - Identity Verification Request",
       html: emailIdentityVerificationRequest(
@@ -106,6 +107,14 @@ export const updatePendingIdentityVerificationRequest: RequestHandler = async (
 ) => {
   const admin_id = req.cookies.admin_id;
   const { identityPhotoId } = req.params;
+  const { identityVerificationStatus } = req.body;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
   try {
     if (!admin_id) {
       clearCookieAndThrowError(
@@ -122,19 +131,18 @@ export const updatePendingIdentityVerificationRequest: RequestHandler = async (
     );
 
     const user = await Users.findByIdAndUpdate(req.body.userId, {
-      identityVerificationStatus: req.body.identityVerificationStatus,
-      identityVerified:
-        req.body.identityVerificationStatus === "success" ? true : false,
+      identityVerificationStatus,
+      identityVerified: identityVerificationStatus === "success" ? true : false,
     });
 
     await transport.sendMail({
-      from: "aceguevarra48@gmail.com",
       to: user?.email,
       subject: "IGotYou - Identity Verification Request Update",
-      html: emailIdentityVerificationRequest(
+      html: emailIdentityVerificationRequestUpdate(
         user?.username!,
         user?.email!,
-        new Date(updatedIdentityRequest?.updatedAt!).toLocaleString()
+        new Date(updatedIdentityRequest?.updatedAt!).toLocaleString(),
+        identityVerificationStatus
       ),
     });
 
