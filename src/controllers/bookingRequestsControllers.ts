@@ -10,6 +10,8 @@ import GuestNotifications from "../models/GuestNotifications";
 import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
 import { emailBookingRequestAccepted } from "../utils/emails/emailBookingRequestAccepted";
+import { compareAsc } from "date-fns";
+import { emailPendingServicePayment } from "../utils/emails/emailPendingServicePayment";
 
 type TBookingRequest = {
   hostID: string;
@@ -414,13 +416,26 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
       {
         new: true,
       }
-    ).populate({ path: "guestID", select: "email username" });
+    ).populate([
+      { path: "guestID", select: "email username" },
+      { path: "listingID", select: "serviceTitle" },
+    ]);
 
     const newReservation = await Reservations.create({
       guestID: approvedBookingRequests?.guestID,
       hostID: id,
       bookingStartsAt: approvedBookingRequests?.requestedBookingDateStartsAt,
       bookingEndsAt: approvedBookingRequests?.requestedBookingDateEndsAt,
+      listingID: approvedBookingRequests?.listingID,
+      status:
+        compareAsc(
+          new Date().setHours(0, 0, 0, 0),
+          approvedBookingRequests!.requestedBookingDateStartsAt
+        ) > 0
+          ? "scheduled"
+          : "ongoing",
+      paymentStatus: "pending",
+      paymentAmount: approvedBookingRequests?.totalPrice,
     });
 
     await Listings.findByIdAndUpdate(approvedBookingRequests?.listingID, {
@@ -436,13 +451,27 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
       notificationType: "Booking-Approved",
     });
 
-    await transport.sendMail({
-      to: (approvedBookingRequests?.guestID as { email: string }).email,
-      subject: "Booking Request Update",
-      html: emailBookingRequestAccepted(
-        (approvedBookingRequests?.guestID as { username: string }).username
-      ),
-    });
+    await Promise.all([
+      transport.sendMail({
+        to: (approvedBookingRequests?.guestID as { email: string }).email,
+        subject: "Booking Request Update",
+        html: emailBookingRequestAccepted(
+          (approvedBookingRequests?.guestID as { username: string }).username
+        ),
+      }),
+      transport.sendMail({
+        to: (approvedBookingRequests?.guestID as { email: string }).email,
+        subject: `Complete Your Service Payment for ${
+          (approvedBookingRequests?.listingID as { serviceTitle: string })
+            .serviceTitle
+        }`,
+        html: emailPendingServicePayment(
+          (approvedBookingRequests?.guestID as { username: string }).username,
+          (approvedBookingRequests?.listingID as { serviceTitle: string })
+            .serviceTitle
+        ),
+      }),
+    ]);
 
     res
       .status(201)

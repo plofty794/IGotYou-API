@@ -101,9 +101,10 @@ export const getListings: RequestHandler = async (req, res, next) => {
       .limit(limit)
       .populate({
         path: "host",
+        select: "username rating wishlists uid",
         match: {
           subscriptionExpiresAt: {
-            $gte: new Date(),
+            $gt: new Date(),
           },
         },
       })
@@ -149,13 +150,14 @@ export const getListingsPerCategory: RequestHandler = async (
       .limit(limit)
       .populate({
         path: "host",
+        select: "username rating wishlists uid",
         match: {
           subscriptionExpiresAt: {
-            $gte: new Date(),
+            $gt: new Date(),
           },
         },
       })
-      .sort({ created_At: "desc" })
+      .sort({ createdAt: "desc" })
       .exec();
 
     if (!categorizedListings.length) {
@@ -183,10 +185,15 @@ export const getUserListing: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "Invalid listing id");
     }
 
-    const listing = await Listings.findById(listingID).populate({
-      path: "host",
-      select: "username photoUrl rating subscriptionExpiresAt",
-    });
+    const listing = await Listings.findById(listingID).populate([
+      {
+        path: "host",
+        select: "username photoUrl rating subscriptionExpiresAt",
+      },
+      {
+        path: "reservedDates",
+      },
+    ]);
     res.status(200).json({ listing });
   } catch (error) {
     next(error);
@@ -273,9 +280,19 @@ export const disableListing: RequestHandler = async (req, res, next) => {
       );
     }
 
-    const hasReservations = await Reservations.find({ listingID });
+    const hasReservations = await Reservations.findOne({
+      listingID,
+      $or: [
+        {
+          status: "ongoing",
+        },
+        {
+          status: "scheduled",
+        },
+      ],
+    });
 
-    if (hasReservations.length) {
+    if (hasReservations) {
       return res.status(409).json({
         error: "This listing cannot be disabled as reservations exist",
       });
@@ -305,7 +322,7 @@ export const enableListing: RequestHandler = async (req, res, next) => {
     const listingInactive = await Listings.findOne({
       _id: listingID,
       availableAt: {
-        $gt: new Date(),
+        $gt: new Date().setHours(0, 0, 0, 0),
       },
     });
 

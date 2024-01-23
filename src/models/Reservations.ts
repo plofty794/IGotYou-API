@@ -24,13 +24,7 @@ const reservationsSchema = new Schema(
     },
     paymentStatus: {
       type: String,
-      enum: [
-        "pending",
-        "fully-paid",
-        "partially-paid",
-        "refunded",
-        "cancelled",
-      ],
+      enum: ["pending", "fully-paid", "partially-paid", "refunded"],
       default: "pending",
       required: true,
     },
@@ -49,6 +43,11 @@ const reservationsSchema = new Schema(
     },
     balance: {
       type: Number,
+    },
+    status: {
+      type: String,
+      enum: ["scheduled", "ongoing", "completed", "cancelled", "expired"],
+      required: true,
     },
   },
   { timestamps: true }
