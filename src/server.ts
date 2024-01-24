@@ -63,10 +63,6 @@ function removeUser(socketId: string) {
   ));
 }
 
-app.get("/", (req, res, next) => {
-  res.send("HEllo");
-});
-
 io.on("connection", (socket) => {
   socket.on("user-connect", (data) => {
     getActiveUsers({
@@ -139,6 +135,10 @@ app.use("/api", identityRoutes);
 app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
 app.use(errorHandler);
+
+app.get("/", (req, res, next) => {
+  return res.json({ message: "Hello" });
+});
 
 cron.schedule("0 8 * * *", async () => {
   const transport = createTransport({
