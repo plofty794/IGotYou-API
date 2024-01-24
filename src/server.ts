@@ -116,7 +116,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/", (req, res, next) => {
+app.get("/api", (req, res, next) => {
   res.json({ message: "Hello" });
 });
 
