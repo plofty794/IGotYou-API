@@ -116,6 +116,10 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get("/", (req, res, next) => {
+  res.json({ message: "Hello" });
+});
+
 app.use(cookieParser());
 app.use(cors({ origin: [env.CLIENT_URL, env.ADMIN_URL], credentials: true }));
 app.use(express.json());
@@ -135,10 +139,6 @@ app.use("/api", identityRoutes);
 app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
 app.use(errorHandler);
-
-app.get("/", (req, res, next) => {
-  return res.json({ message: "Hello" });
-});
 
 cron.schedule("0 8 * * *", async () => {
   const transport = createTransport({
