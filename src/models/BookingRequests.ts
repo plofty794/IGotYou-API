@@ -35,7 +35,7 @@ const bookingRequestsSchema = new Schema(
       type: Number,
       required: true,
     },
-    declineReasons: {
+    hostDeclineReasons: {
       type: String,
       enum: [
         "unverified identity",
@@ -44,6 +44,18 @@ const bookingRequestsSchema = new Schema(
         "safety concerns",
         "no reviews",
         "negative reviews",
+      ],
+    },
+    guestCancelReasons: {
+      type: String,
+      enum: [
+        "unverified identity",
+        "unexpected events",
+        "mismatched expectations",
+        "safety concerns",
+        "no reviews",
+        "negative reviews",
+        "change of heart",
       ],
     },
   },

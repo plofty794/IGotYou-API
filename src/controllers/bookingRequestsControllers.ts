@@ -128,16 +128,21 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
       data: newBookingRequest._id,
     });
 
-    await newHostNotification.populate({
-      path: "senderID",
-      select: "username",
+    await newHostNotification.populate([
+      {
+        path: "senderID",
+        select: "username",
+      },
+      {
+        path: "recipientID",
+        select: "username",
+      },
+    ]);
+
+    res.status(201).json({
+      receiverName: (newHostNotification.recipientID as { username: string })
+        .username,
     });
-
-    const receiverName = await Users.findById(hostID).select("username");
-
-    res
-      .status(201)
-      .json({ newHostNotification, receiverName: receiverName?.username });
   } catch (error) {
     next(error);
   }
@@ -276,7 +281,7 @@ export const searchGuestBookingRequest: RequestHandler = async (
         (v.hostID as { username: string }).username
           .toLowerCase()
           .includes((search as string).toLowerCase()) ||
-        (v.listingID as { serviceDescription: string }).serviceDescription
+        (v.listingID as { serviceTitle: string }).serviceTitle
           .toLowerCase()
           .includes((search as string).toLowerCase())
     );
@@ -389,6 +394,61 @@ export const getGuestCancelledBookingRequests: RequestHandler = async (
   }
 };
 
+export const cancelBookingRequest: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { bookingRequestID } = req.params;
+  const { guestCancelReasons } = req.body;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const bookingRequestIsPending = await BookingRequests.findOne({
+      _id: bookingRequestID,
+      status: "pending",
+    });
+
+    if (!bookingRequestIsPending) {
+      return res.status(400).json({
+        message: "Booking request cancellation failed.",
+      });
+    }
+
+    await bookingRequestIsPending.updateOne({
+      status: "cancelled",
+      guestCancelReasons,
+    });
+
+    const cancelledBookingRequestNotification =
+      await HostNotifications.findOneAndUpdate(
+        {
+          data: bookingRequestID,
+        },
+        {
+          read: false,
+          notificationType: "Booking-Cancelled",
+        }
+      ).populate({
+        path: "recipientID",
+        select: "username",
+      });
+
+    res.status(200).json({
+      message: "Booking request has been cancelled.",
+      receiverName: (
+        cancelledBookingRequestNotification?.recipientID as {
+          username: string;
+        }
+      ).username,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { bookingRequestID } = req.params;
@@ -429,8 +489,8 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
       listingID: approvedBookingRequests?.listingID,
       status:
         compareAsc(
-          new Date().setHours(0, 0, 0, 0),
-          approvedBookingRequests!.requestedBookingDateStartsAt
+          approvedBookingRequests!.requestedBookingDateStartsAt,
+          new Date().setHours(0, 0, 0, 0)
         ) > 0
           ? "scheduled"
           : "ongoing",
@@ -476,6 +536,39 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
     res
       .status(201)
       .json({ bookingRequestID: approvedBookingRequests?._id, receiverName });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reAttemptBookingRequest: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  const id = req.cookies["_&!d"];
+  const { bookingRequestID } = req.params;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const bookingReattemptIsValid = await BookingRequests.findOne({
+      _id: bookingRequestID,
+      requestedBookingDateStartsAt: {
+        $lte: new Date().setHours(0, 0, 0, 0),
+      },
+    });
+
+    if (bookingReattemptIsValid) {
+      const reAttemptBookingRequest = await BookingRequests.findByIdAndUpdate(
+        bookingRequestID,
+        { status: "pending", guestCancelReasons: undefined }
+      );
+    }
   } catch (error) {
     next(error);
   }

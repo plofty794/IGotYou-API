@@ -31,7 +31,11 @@ const server = app
 
 const io = new Server(server, {
   cors: {
-    origin: [env.CLIENT_URL, env.ADMIN_URL],
+    origin: [
+      env.CLIENT_URL,
+      env.ADMIN_URL,
+      "https://i-got-you-client.vercel.app",
+    ],
     credentials: true,
   },
 });
@@ -89,10 +93,7 @@ io.on("connection", (socket) => {
   socket.on("send-bookingRequest", (data) => {
     const activeUser = findActiveUser(data.receiverName);
     if (activeUser) {
-      io.to(activeUser.socketId).emit(
-        "send-hostNotification",
-        data.newHostNotification
-      );
+      io.to(activeUser.socketId).emit("send-booking-request-hostNotification");
     }
   });
 
@@ -102,6 +103,15 @@ io.on("connection", (socket) => {
       io.to(activeUser.socketId).emit(
         "booking-requestUpdate",
         data.bookingRequestID
+      );
+    }
+  });
+
+  socket.on("guest-cancel-bookingRequest", (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit(
+        "send-booking-cancelled-hostNotification"
       );
     }
   });
@@ -121,7 +131,16 @@ app.get("/api", (req, res, next) => {
 });
 
 app.use(cookieParser());
-app.use(cors({ origin: [env.CLIENT_URL, env.ADMIN_URL], credentials: true }));
+app.use(
+  cors({
+    origin: [
+      env.CLIENT_URL,
+      env.ADMIN_URL,
+      "https://i-got-you-client.vercel.app",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(
   express.urlencoded({

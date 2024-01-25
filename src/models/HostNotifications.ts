@@ -12,7 +12,12 @@ const hostNotificationSchema = new Schema(
     },
     notificationType: {
       type: String,
-      enum: ["New-Message", "Booking-Request", "Booking-Cancelled"],
+      enum: [
+        "New-Message",
+        "Booking-Request",
+        "Booking-Cancelled",
+        "Re-attempt-Request",
+      ],
       required: true,
     },
     data: {
