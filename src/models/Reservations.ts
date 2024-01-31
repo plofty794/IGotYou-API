@@ -46,7 +46,7 @@ const reservationsSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed", "cancelled", "expired"],
+      enum: ["scheduled", "ongoing", "completed", "cancelled"],
       required: true,
     },
   },

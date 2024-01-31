@@ -4,6 +4,7 @@ import Conversations from "../models/Conversations";
 import Users from "../models/Users";
 import Messages from "../models/Messages";
 import GuestNotifications from "../models/GuestNotifications";
+import BlockedUsers from "../models/BlockedUsers";
 
 export const getCurrentUserConversations: RequestHandler = async (
   req,
@@ -37,7 +38,7 @@ export const getCurrentUserConversations: RequestHandler = async (
             select: ["username", "photoUrl"],
           },
         },
-        { path: "participants", select: ["username", "_id", "photoUrl"] },
+        { path: "participants", select: "username _id photoUrl uid" },
       ])
       .sort({ updatedAt: "desc" })
       .exec();
@@ -74,7 +75,7 @@ export const getCurrentUserConversation: RequestHandler = async (
             select: ["username", "photoUrl"],
           },
         },
-        { path: "participants", select: ["username", "_id", "photoUrl"] },
+        { path: "participants", select: "username _id photoUrl uid" },
       ])
       .exec();
 
@@ -215,6 +216,32 @@ export const sendMessage: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "Invalid conversation ID");
     }
 
+    const recipientID = await Users.findOne({ username: receiverName });
+
+    const isBlocked = await BlockedUsers.findOne({
+      blockedID: id,
+      blockerID: recipientID?._id,
+    });
+
+    if (isBlocked) {
+      throw createHttpError(
+        400,
+        "This user is unable to receive messages from you at this time."
+      );
+    }
+
+    const isBlocker = await BlockedUsers.findOne({
+      blockedID: recipientID?._id,
+      blockerID: id,
+    });
+
+    if (isBlocker) {
+      throw createHttpError(
+        400,
+        "Unblock this user if you want to send a message."
+      );
+    }
+
     const lastMessage = await Messages.create({
       content,
       senderID: id,
@@ -235,8 +262,6 @@ export const sendMessage: RequestHandler = async (req, res, next) => {
       },
       { new: true }
     );
-
-    const recipientID = await Users.findOne({ username: receiverName });
 
     const guestNotificationExist = await GuestNotifications.findOne({
       senderID: id,
@@ -288,7 +313,31 @@ export const sendMessageToHost: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "Missing field(s): Content or Host id");
     }
 
-    const hostName = await Users.findById(hostID).select("username");
+    const host = await Users.findById(hostID).select("username");
+
+    const isBlocked = await BlockedUsers.findOne({
+      blockedID: id,
+      blockerID: host?._id,
+    });
+
+    if (isBlocked) {
+      throw createHttpError(
+        400,
+        "This user is unable to receive messages from you at this time."
+      );
+    }
+
+    const isBlocker = await BlockedUsers.findOne({
+      blockedID: host?._id,
+      blockerID: id,
+    });
+
+    if (isBlocker) {
+      throw createHttpError(
+        400,
+        "Unblock this user if you want to send a message."
+      );
+    }
 
     const conversationExist = await Conversations.findOne({
       participants: {
@@ -323,7 +372,7 @@ export const sendMessageToHost: RequestHandler = async (req, res, next) => {
 
       return res.status(201).json({
         conversation: lastMessage,
-        receiverName: hostName?.username,
+        receiverName: host?.username,
         conversationID: newConversation?._id,
       });
     }
@@ -349,7 +398,7 @@ export const sendMessageToHost: RequestHandler = async (req, res, next) => {
 
     return res.status(200).json({
       conversation: lastMessage,
-      receiverName: hostName?.username,
+      receiverName: host?.username,
       conversationID: conversationExist?._id,
     });
   } catch (error) {

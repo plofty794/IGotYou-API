@@ -21,9 +21,18 @@ export const getCurrentReservations: RequestHandler = async (
 
     const currentReservations = await Reservations.find({
       hostID: id,
-      bookingStartsAt: {
-        $eq: new Date().setHours(0, 0, 0, 0),
-      },
+      $and: [
+        {
+          bookingStartsAt: {
+            $lte: new Date().setHours(0, 0, 0, 0),
+          },
+        },
+        {
+          bookingEndsAt: {
+            $gte: new Date().setHours(0, 0, 0, 0),
+          },
+        },
+      ],
     })
       .populate([
         { path: "guestID", select: "username email" },

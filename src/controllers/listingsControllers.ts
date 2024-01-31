@@ -239,7 +239,13 @@ export const addListing: RequestHandler = async (req, res, next) => {
       },
       { new: true }
     );
-    res.status(200).json({ newListingID: newListing._id });
+
+    res
+      .status(200)
+      .json({
+        message: "Listing created successfully.",
+        newListingID: newListing?._id,
+      });
   } catch (error) {
     next(error);
   }
@@ -294,7 +300,7 @@ export const disableListing: RequestHandler = async (req, res, next) => {
 
     if (hasReservations) {
       return res.status(409).json({
-        error: "This listing cannot be disabled as reservations exist",
+        error: "This listing can't be disabled.",
       });
     }
 

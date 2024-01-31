@@ -19,6 +19,7 @@ import Users from "./models/Users";
 import { addDays } from "date-fns";
 import cron from "node-cron";
 import { createTransport } from "nodemailer";
+import { blockedUsersRoutes } from "./routes/blockUsersRoutes";
 
 const app = express();
 const server = app
@@ -157,6 +158,7 @@ app.use("/api", notificationRoutes);
 app.use("/api", identityRoutes);
 app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
+app.use("/api", blockedUsersRoutes);
 app.use(errorHandler);
 
 cron.schedule("0 8 * * *", async () => {

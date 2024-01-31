@@ -110,6 +110,10 @@ const usersSchema = new Schema(
       type: [Types.ObjectId],
       ref: "Listings",
     },
+    listings: {
+      type: [Types.ObjectId],
+      ref: "Listings",
+    },
   },
   { timestamps: true }
 );

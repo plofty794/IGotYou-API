@@ -9,11 +9,15 @@ import {
   getGuestDeclinedBookingRequests,
   getGuestPendingBookingRequests,
   getHostBookingRequests,
+  reAttemptBookingRequest,
   searchGuestBookingRequest,
   sendBookingRequest,
 } from "../controllers/bookingRequestsControllers";
 import { authToken } from "../middlewares/authToken";
-import { sendBookingRequestLimiter } from "../utils/limiters";
+import {
+  reAttemptBookingRequestLimiter,
+  sendBookingRequestLimiter,
+} from "../utils/limiters";
 const router = Router();
 
 router.get("/guest-booking-requests", authToken, searchGuestBookingRequest);
@@ -59,6 +63,12 @@ router.patch(
   "/guest-cancel-booking-request/:bookingRequestID",
   authToken,
   cancelBookingRequest
+);
+router.patch(
+  "/guest-reAttempt-booking-request/:bookingRequestID",
+  authToken,
+  reAttemptBookingRequestLimiter,
+  reAttemptBookingRequest
 );
 
 export { router as bookingRequestRoutes };

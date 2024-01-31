@@ -24,3 +24,11 @@ export const sendIdentityVerificationRequestLimiter = rateLimit({
     error: "Identity photo request rejected, please try again later.",
   },
 });
+
+export const reAttemptBookingRequestLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  limit: 3,
+  message: {
+    error: "You've reached your daily limit. Try again tomorrow.",
+  },
+});

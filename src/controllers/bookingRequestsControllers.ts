@@ -12,6 +12,8 @@ import env from "../utils/envalid";
 import { emailBookingRequestAccepted } from "../utils/emails/emailBookingRequestAccepted";
 import { compareAsc } from "date-fns";
 import { emailPendingServicePayment } from "../utils/emails/emailPendingServicePayment";
+import BlockedUsers from "../models/BlockedUsers";
+import BlockedDates from "../models/BlockedDates";
 
 type TBookingRequest = {
   hostID: string;
@@ -73,6 +75,30 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
       );
     }
 
+    const hostBlockedDates = await BlockedDates.findOne({
+      user: hostID,
+      blockedDates: {
+        $in: [requestedBookingDateStartsAt, requestedBookingDateEndsAt],
+      },
+    });
+
+    if (hostBlockedDates) {
+      return res.status(400).json({
+        error: "Host is not available with the requested dates.",
+      });
+    }
+
+    const isBlocked = await BlockedUsers.findOne({
+      blockerID: hostID,
+      blockedID: id,
+    });
+
+    if (isBlocked) {
+      return res.status(400).json({
+        error: "Host is unable to receive requests from you at this time.",
+      });
+    }
+
     const listingIsActive = await Listings.findOne({
       _id: listingID,
       $or: [
@@ -84,19 +110,20 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
     });
 
     if (!listingIsActive) {
-      throw createHttpError(400, "Listing has been disabled by the host");
+      throw createHttpError(400, "Listing has been disabled by the host.");
     }
 
     const bookingRequestAlreadyExist = await BookingRequests.findOne({
       guestID: id,
       hostID,
       listingID,
+      $or: [{ status: "pending" }, { status: "approved" }],
     });
 
     if (bookingRequestAlreadyExist) {
-      return res
-        .status(400)
-        .json({ error: "You've already sent a booking request" });
+      return res.status(400).json({
+        error: "You've already sent a booking request.",
+      });
     }
 
     const hasReservation = await Reservations.findOne({
@@ -113,7 +140,7 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
     });
 
     if (hasReservation) {
-      return res.status(400).json({ message: "Dates are already taken" });
+      return res.status(400).json({ error: "Dates are already taken" });
     }
 
     const newBookingRequest = await BookingRequests.create({
@@ -460,11 +487,26 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
       pass: env.APP_PASSWORD,
     },
   });
+
   try {
     if (!id) {
       clearCookieAndThrowError(
         res,
         "A _id cookie is required to access this resource."
+      );
+    }
+
+    const receiver = await Users.findOne({ username: receiverName });
+
+    const isBlocker = await BlockedUsers.findOne({
+      blockedID: receiver?._id,
+      blockerID: id,
+    });
+
+    if (isBlocker) {
+      throw createHttpError(
+        400,
+        "Unblock this user if you want to accept their request."
       );
     }
 
@@ -556,19 +598,46 @@ export const reAttemptBookingRequest: RequestHandler = async (
       );
     }
 
-    const bookingReattemptIsValid = await BookingRequests.findOne({
+    const bookingReattemptIsInvalid = await BookingRequests.findOne({
       _id: bookingRequestID,
       requestedBookingDateStartsAt: {
         $lte: new Date().setHours(0, 0, 0, 0),
       },
     });
 
-    if (bookingReattemptIsValid) {
-      const reAttemptBookingRequest = await BookingRequests.findByIdAndUpdate(
-        bookingRequestID,
-        { status: "pending", guestCancelReasons: undefined }
-      );
+    if (bookingReattemptIsInvalid) {
+      return res
+        .status(400)
+        .json({ message: "Requested starting date has ended." });
     }
+
+    const reAttemptBookingRequest = await BookingRequests.findByIdAndUpdate(
+      bookingRequestID,
+      { status: "pending", guestCancelReasons: undefined }
+    );
+
+    const reAttemptBookingRequestNotification =
+      await HostNotifications.findOneAndUpdate(
+        { data: reAttemptBookingRequest?._id },
+        {
+          notificationType: "Re-attempt-Request",
+          read: false,
+        }
+      );
+
+    await reAttemptBookingRequestNotification?.populate({
+      path: "recipientID",
+      select: "username",
+    });
+
+    res.status(200).json({
+      message: "Booking request re-attempt has been sent.",
+      receiverName: (
+        reAttemptBookingRequestNotification?.recipientID as {
+          username: string;
+        }
+      ).username,
+    });
   } catch (error) {
     next(error);
   }
