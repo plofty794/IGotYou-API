@@ -14,4 +14,5 @@ export default cleanEnv(process.env, {
   ADMIN_URL: url(),
   APP_PASSWORD: str(),
   ADMIN_EMAIL: email(),
+  FIREBASE_SERVICE_KEY: str(),
 });
