@@ -1,25 +1,25 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import env from "./utils/envalid";
 import mongoose from "mongoose";
 import { errorHandler } from "./controllers/errorsController";
-import { userRoutes } from "./routes/userRoutes";
-import { listingRoutes } from "./routes/listingRoutes";
-import { assetRoutes } from "./routes/assetRoutes";
-import { adminRoutes } from "./routes/adminRoutes";
-import { subscriptionPaymentRoutes } from "./routes/subscriptionPaymentRoutes";
+import { userRoutes } from "./api/userRoutes";
+import { listingRoutes } from "./api/listingRoutes";
+import { assetRoutes } from "./api/assetRoutes";
+import { adminRoutes } from "./api/adminRoutes";
+import { subscriptionPaymentRoutes } from "./api/subscriptionPaymentRoutes";
 import { Server } from "socket.io";
-import { conversationRoutes } from "./routes/conversationRoutes";
-import { notificationRoutes } from "./routes/notificationRoutes";
-import { identityRoutes } from "./routes/identityPhotoRoutes";
-import { reservationRoutes } from "./routes/reservationRoutes";
-import { bookingRequestRoutes } from "./routes/bookingRequestRoutes";
+import { conversationRoutes } from "./api/conversationRoutes";
+import { notificationRoutes } from "./api/notificationRoutes";
+import { identityRoutes } from "./api/identityPhotoRoutes";
+import { reservationRoutes } from "./api/reservationRoutes";
+import { bookingRequestRoutes } from "./api/bookingRequestRoutes";
 import Users from "./models/Users";
 import { addDays } from "date-fns";
 import cron from "node-cron";
 import { createTransport } from "nodemailer";
-import { blockedUsersRoutes } from "./routes/blockUsersRoutes";
+import { blockedUsersRoutes } from "./api/blockUsersRoutes";
 
 const app = express();
 const server = app
@@ -143,7 +143,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/api", (req, res, next) => {
+app.get("/api/hello", (_, res, __) => {
   res.json({ message: "Hello" });
 });
 

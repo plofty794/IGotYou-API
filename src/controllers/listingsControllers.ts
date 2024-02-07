@@ -44,6 +44,15 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
       ),
       Listings.updateMany(
         {
+          availableAt: {
+            $gt: new Date(),
+          },
+          status: "Active",
+        },
+        { status: "Inactive" }
+      ),
+      Listings.updateMany(
+        {
           endsAt: {
             $lte: new Date(),
           },
