@@ -20,7 +20,7 @@ jobs:
         env:
           PORTER_CLUSTER: "19"
           PORTER_HOST: https://sandbox.porter.run
-          PORTER_PR_NUMBER: ${{ github.event.number }}
+          PORTER_PR_NUMBER: ${{ a817d91 }}
           PORTER_PROJECT: "21"
           PORTER_STACK_NAME: igotyou-api
           PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
