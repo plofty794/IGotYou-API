@@ -4,6 +4,8 @@ import Reservations from "../models/Reservations";
 import Ratings from "../models/Ratings";
 import BookingRequests from "../models/BookingRequests";
 import HostNotifications from "../models/HostNotifications";
+import { createTransport } from "nodemailer";
+import env from "../utils/envalid";
 
 export const getCurrentReservation: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
@@ -482,6 +484,36 @@ export const requestServiceCancellation: RequestHandler = async (
       receiverName: (newHostNotification.recipientID as { username: string })
         .username,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const confirmServiceEnded: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { reservationID } = req.params;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await Reservations.findByIdAndUpdate(reservationID, {
+      confirmServiceEnded: true,
+    });
+
+    res.status(200).json({ message: "Service is now confirmed done." });
   } catch (error) {
     next(error);
   }

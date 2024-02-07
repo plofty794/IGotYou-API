@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  confirmServiceEnded,
   getCurrentReservation,
   getCurrentReservationDetails,
   getPendingServicePayments,
@@ -33,6 +34,11 @@ router.post(
   "/reservations/request-service-cancellation/:reservationID",
   authToken,
   requestServiceCancellation
+);
+router.post(
+  "/reservations/confirm-service-ended/:reservationID",
+  authToken,
+  confirmServiceEnded
 );
 router.patch(
   "/reservations/update-payment/:reservationID",
