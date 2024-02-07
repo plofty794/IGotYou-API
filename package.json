@@ -5,8 +5,8 @@
   "main": "server.ts",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon --watch server.ts",
-    "start": "node server.ts"
+    "dev": "nodemon --watch \"*/**/*.ts\" --exec \"ts-node\" server.ts",
+    "start": "node ./src/server.ts"
   },
   "keywords": [],
   "author": "",
