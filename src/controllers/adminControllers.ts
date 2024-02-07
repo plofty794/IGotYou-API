@@ -3,6 +3,7 @@ import Admin from "../models/Admin";
 import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import Users from "../models/Users";
+import Reservations from "../models/Reservations";
 
 export const getActiveUsers: RequestHandler = async (req, res, next) => {
   const admin_id = req.cookies.admin_id;

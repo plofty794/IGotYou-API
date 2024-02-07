@@ -16,7 +16,8 @@ const guestNotificationSchema = new Schema(
       required: true,
     },
     data: {
-      type: String,
+      type: Types.ObjectId,
+      ref: "BookingRequests",
     },
     read: {
       type: Boolean,

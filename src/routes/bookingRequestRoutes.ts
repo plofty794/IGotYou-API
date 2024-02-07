@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   acceptBookingRequest,
   cancelBookingRequest,
+  declineBookingRequest,
   getBookingRequestDetails,
   getGuestApprovedBookingRequests,
   getGuestBookingRequests,
@@ -63,6 +64,11 @@ router.patch(
   "/guest-cancel-booking-request/:bookingRequestID",
   authToken,
   cancelBookingRequest
+);
+router.patch(
+  "/host-decline-booking-request/:bookingRequestID",
+  authToken,
+  declineBookingRequest
 );
 router.patch(
   "/guest-reAttempt-booking-request/:bookingRequestID",

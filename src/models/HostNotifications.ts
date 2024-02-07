@@ -17,6 +17,7 @@ const hostNotificationSchema = new Schema(
         "Booking-Request",
         "Booking-Cancelled",
         "Re-attempt-Request",
+        "Service-Cancellation-Request",
       ],
       required: true,
     },

@@ -19,6 +19,7 @@ import {
   verifyEmail,
   changeAvailability,
   getBlockedDates,
+  rateUser,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
@@ -47,6 +48,7 @@ router.patch(
   updateUser
 );
 router.post("/users/host-change-availability", authToken, changeAvailability);
+router.post("/users/rate-user", authToken, rateUser);
 router.patch("/users/current-user/verify-email", authToken, verifyEmail);
 router.patch("/users/current-user/update-email", authToken, updateUserEmail);
 router.delete("/users/current-user/logout", logOutUser);

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   addListing,
   disableListing,
+  editListing,
   enableListing,
   getHostListings,
   getListings,
@@ -20,5 +21,6 @@ router.post("/listings/make-a-listing", authToken, addListing);
 router.patch("/listings/renew-listing/:listingID", authToken, renewListing);
 router.patch("/listings/disable-listing/:listingID", authToken, disableListing);
 router.patch("/listings/enable-listing/:listingID", authToken, enableListing);
+router.patch("/listings/edit/:listingID", authToken, editListing);
 
 export { router as listingRoutes };

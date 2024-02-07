@@ -98,6 +98,15 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("request-service-cancellation", (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit(
+        "request-service-cancellation-hostNotification"
+      );
+    }
+  });
+
   socket.on("send-bookingRequest-update", (data) => {
     const activeUser = findActiveUser(data.receiverName);
     if (activeUser) {
@@ -114,6 +123,13 @@ io.on("connection", (socket) => {
       io.to(activeUser.socketId).emit(
         "send-booking-cancelled-hostNotification"
       );
+    }
+  });
+
+  socket.on("host-decline-bookingRequest", (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit("booking-requestUpdate");
     }
   });
 

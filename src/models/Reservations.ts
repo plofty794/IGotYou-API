@@ -28,9 +28,27 @@ const reservationsSchema = new Schema(
       default: "pending",
       required: true,
     },
+    partialPaymentVerificationStatus: {
+      type: String,
+      enum: ["pending", "success", "rejected"],
+    },
+    fullPaymentVerificationStatus: {
+      type: String,
+      enum: ["pending", "success", "rejected"],
+    },
+    paymentType: {
+      type: String,
+      enum: ["full-payment", "partial-payment"],
+    },
     paymentAmount: {
       type: Number,
       required: true,
+    },
+    fullPaymentAmount: {
+      type: Number,
+    },
+    partialPaymentAmount: {
+      type: Number,
     },
     partialPaymentDate: {
       type: Date,
@@ -44,10 +62,57 @@ const reservationsSchema = new Schema(
     balance: {
       type: Number,
     },
+    partialPaymentProofPhoto: {
+      type: {
+        public_id: {
+          type: String,
+        },
+        secure_url: {
+          type: String,
+        },
+        thumbnail_url: {
+          type: String,
+        },
+      },
+    },
+    fullPaymentProofPhoto: {
+      type: {
+        public_id: {
+          type: String,
+        },
+        secure_url: {
+          type: String,
+        },
+        thumbnail_url: {
+          type: String,
+        },
+      },
+    },
+    partialPaymentRefNo: {
+      type: String,
+    },
+    fullPaymentRefNo: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ["scheduled", "ongoing", "completed", "cancelled"],
       required: true,
+    },
+    confirmServiceEnded: {
+      type: Boolean,
+      default: false,
+    },
+    hostCancellationReason: {
+      type: String,
+      enum: [
+        "personal illness or emergency",
+        "unavailability of resources",
+        "natural disasters or weather events",
+        "payment issues",
+        "safety Concerns",
+        "disputes or conflicts",
+      ],
     },
   },
   { timestamps: true }

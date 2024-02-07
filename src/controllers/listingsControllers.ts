@@ -32,24 +32,25 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
       );
     }
 
-    await Listings.updateMany(
-      {
-        endsAt: {
-          $lte: new Date(),
+    await Promise.all([
+      Listings.updateMany(
+        {
+          availableAt: {
+            $lte: new Date(),
+          },
+          status: "Inactive",
         },
-      },
-      { status: "Ended" }
-    );
-
-    await Listings.updateMany(
-      {
-        availableAt: {
-          $lte: new Date(),
+        { status: "Active" }
+      ),
+      Listings.updateMany(
+        {
+          endsAt: {
+            $lte: new Date(),
+          },
         },
-        status: "Inactive",
-      },
-      { status: "Active" }
-    );
+        { status: "Ended" }
+      ),
+    ]);
 
     const hostListings = await Listings.find({
       host: id,
@@ -240,12 +241,51 @@ export const addListing: RequestHandler = async (req, res, next) => {
       { new: true }
     );
 
-    res
-      .status(200)
-      .json({
-        message: "Listing created successfully.",
-        newListingID: newListing?._id,
-      });
+    res.status(200).json({
+      message: "Listing created successfully.",
+      newListingID: newListing?._id,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editListing: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { listingID } = req.params;
+  try {
+    if (!id) {
+      clearCookieAndThrowError(
+        res,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const hasReservation = await Reservations.findOne({
+      hostID: id,
+      listingID,
+      $or: [
+        {
+          status: "upcoming",
+        },
+        {
+          status: "ongoing",
+        },
+      ],
+    });
+
+    if (hasReservation) {
+      throw createHttpError(
+        400,
+        "Existing reservation scheduled for this listing."
+      );
+    }
+
+    await Listings.findByIdAndUpdate(listingID, {
+      ...req.body,
+    });
+
+    res.status(200).json({ message: "Listing has been edited." });
   } catch (error) {
     next(error);
   }

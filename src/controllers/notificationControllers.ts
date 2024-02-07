@@ -16,14 +16,29 @@ export const getGuestNotifications: RequestHandler = async (req, res, next) => {
 
     const guestNotifications = await GuestNotifications.find({
       recipientID: id,
-      read: false,
+      $or: [
+        {
+          notificationType: "Booking-Approved",
+        },
+        {
+          notificationType: "Booking-Declined",
+        },
+        {
+          notificationType: "New-Message",
+        },
+      ],
     })
+      .populate([
+        { select: ["username"], path: "senderID" },
+        {
+          path: "data",
+          select: ["reservationID"],
+        },
+      ])
       .sort({ createdAt: "desc" })
       .exec();
 
-    res.status(200).json({
-      guestNotifications: guestNotifications.map((v) => v.notificationType),
-    });
+    res.status(200).json({ guestNotifications });
   } catch (error) {
     next(error);
   }
@@ -80,6 +95,32 @@ export const updateGuestNotification: RequestHandler = async (
     );
 
     res.status(201).json({ updateNotification });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const readBookingRequestNotification: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  const id = req.cookies["_&!d"];
+  const { notificationID } = req.params;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await GuestNotifications.findByIdAndUpdate(notificationID, {
+      read: true,
+    });
+
+    res.status(200).json({ message: "read notification" });
   } catch (error) {
     next(error);
   }

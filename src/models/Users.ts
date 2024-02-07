@@ -2,27 +2,6 @@ import { Schema, InferSchemaType, model, Types } from "mongoose";
 import env from "../utils/envalid";
 import bcrypt from "bcrypt";
 
-const ratingSchema = new Schema(
-  {
-    userRating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5,
-    },
-    ratedBy: {
-      type: Types.ObjectId,
-      ref: "Users",
-      required: true,
-    },
-    feedback: {
-      type: String,
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
 const usersSchema = new Schema(
   {
     providerId: {
@@ -92,7 +71,8 @@ const usersSchema = new Schema(
       default: "guest",
     },
     rating: {
-      type: [ratingSchema],
+      type: [Types.ObjectId],
+      ref: "Ratings",
     },
     identityVerificationStatus: {
       type: String,
