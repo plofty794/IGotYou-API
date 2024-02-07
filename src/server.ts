@@ -145,7 +145,7 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (_, res, __) => {
-  res.json({ message: "Hello" });
+  res.send({ message: "Hello" });
 });
 
 app.use(cookieParser());
