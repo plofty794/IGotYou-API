@@ -1,25 +1,26 @@
-import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import env from "../utils/envalid";
+import env from "./utils/envalid";
 import mongoose from "mongoose";
-import { errorHandler } from "../controllers/errorsController";
-import { userRoutes } from "../routes/userRoutes";
-import { listingRoutes } from "../routes/listingRoutes";
-import { assetRoutes } from "../routes/assetRoutes";
-import { adminRoutes } from "../routes/adminRoutes";
-import { subscriptionPaymentRoutes } from "../routes/subscriptionPaymentRoutes";
+import { errorHandler } from "./controllers/errorsController";
+import { userRoutes } from "./routes/userRoutes";
+import { listingRoutes } from "./routes/listingRoutes";
+import { assetRoutes } from "./routes/assetRoutes";
+import { adminRoutes } from "./routes/adminRoutes";
+import { subscriptionPaymentRoutes } from "./routes/subscriptionPaymentRoutes";
 import { Server } from "socket.io";
-import { conversationRoutes } from "../routes/conversationRoutes";
-import { notificationRoutes } from "../routes/notificationRoutes";
-import { identityRoutes } from "../routes/identityPhotoRoutes";
-import { reservationRoutes } from "../routes/reservationRoutes";
-import { bookingRequestRoutes } from "../routes/bookingRequestRoutes";
-import Users from "../models/Users";
+import { conversationRoutes } from "./routes/conversationRoutes";
+import { notificationRoutes } from "./routes/notificationRoutes";
+import { identityRoutes } from "./routes/identityPhotoRoutes";
+import { reservationRoutes } from "./routes/reservationRoutes";
+import { bookingRequestRoutes } from "./routes/bookingRequestRoutes";
+import Users from "./models/Users";
 import { addDays } from "date-fns";
 import cron from "node-cron";
 import { createTransport } from "nodemailer";
-import { blockedUsersRoutes } from "../routes/blockUsersRoutes";
+import { blockedUsersRoutes } from "./routes/blockUsersRoutes";
+import serverless from "serverless-http";
+import express from "express";
 
 const app = express();
 const server = app
@@ -143,7 +144,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/hello", (_, res, __) => {
+app.get("/", (_, res, __) => {
   res.json({ message: "Hello" });
 });
 
@@ -209,3 +210,5 @@ cron.schedule("0 8 * * *", async () => {
     console.error(error);
   }
 });
+
+export const handler = serverless(app);
