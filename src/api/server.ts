@@ -143,7 +143,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/api/hello", (_, res, __) => {
+app.get("/hello", (_, res, __) => {
   res.json({ message: "Hello" });
 });
 
