@@ -33,13 +33,8 @@ const server = app
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      env.CLIENT_URL,
-      env.ADMIN_URL,
-      "https://i-got-you-client.vercel.app",
-    ],
+    origin: ["*"],
     credentials: true,
-    allowedHeaders: ["Access-Control-Allow-Origin"],
   },
 });
 
@@ -152,13 +147,8 @@ app.get("/", (_, res, __) => {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      env.CLIENT_URL,
-      env.ADMIN_URL,
-      "https://i-got-you-client.vercel.app",
-    ],
+    origin: ["*"],
     credentials: true,
-    allowedHeaders: ["Access-Control-Allow-Origin"],
   })
 );
 app.use(express.json());
