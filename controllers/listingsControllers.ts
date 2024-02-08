@@ -84,6 +84,7 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
 export const getListings: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const limit = 12;
+  const { minPrice, maxPrice, serviceType } = req.query;
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
     if (!id) {
@@ -102,6 +103,45 @@ export const getListings: RequestHandler = async (req, res, next) => {
       },
       { status: "Active" }
     );
+
+    console.log(minPrice, maxPrice, serviceType);
+
+    if (minPrice != null || maxPrice != null || serviceType != null) {
+      const listings = await Listings.find({
+        $and: [
+          {
+            price: { $gte: minPrice },
+          },
+          {
+            price: { $lte: maxPrice },
+          },
+        ],
+        serviceType,
+        endsAt: { $gte: new Date() },
+        $or: [{ status: "Active" }, { status: "Inactive" }],
+      })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "host",
+          select: "username rating wishlists uid",
+          match: {
+            subscriptionExpiresAt: {
+              $gt: new Date(),
+            },
+          },
+        })
+        .sort({ createdAt: "desc" })
+        .exec();
+
+      const totalPages = Math.ceil(listings.length / limit);
+
+      if (!listings.length) {
+        return res.status(200).json({ listings: [], totalPages: 0 });
+      }
+
+      return res.status(200).json({ listings, totalPages });
+    }
 
     const listings = await Listings.find({
       endsAt: { $gte: new Date() },
