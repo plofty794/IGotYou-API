@@ -39,9 +39,7 @@ const io = new Server(server, {
       "https://i-got-you-client.vercel.app",
     ],
     credentials: true,
-    allowedHeaders: {
-      "Access-Control-Allow-Origin": "*",
-    },
+    allowedHeaders: ["Access-Control-Allow-Origin"],
   },
 });
 
