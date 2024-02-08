@@ -32,10 +32,6 @@ const server = app
   );
 
 const io = new Server(server, {
-  cors: {
-    origin: ["*"],
-    credentials: true,
-  },
   allowRequest: (req, cb) => {
     const noOriginHeader = req.headers.origin === undefined;
     cb(null, noOriginHeader);
