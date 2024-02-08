@@ -36,6 +36,10 @@ const io = new Server(server, {
     origin: ["*"],
     credentials: true,
   },
+  allowRequest: (req, cb) => {
+    const noOriginHeader = req.headers.origin === undefined;
+    cb(null, noOriginHeader);
+  },
 });
 
 type TActiveUsers = {
