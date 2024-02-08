@@ -32,9 +32,9 @@ const server = app
   );
 
 const io = new Server(server, {
-  allowRequest: (req, cb) => {
-    const noOriginHeader = req.headers.origin === undefined;
-    cb(null, noOriginHeader);
+  cors: {
+    origin: ["https://i-got-you-client-nxqt.vercel.app/"],
+    credentials: true,
   },
 });
 
