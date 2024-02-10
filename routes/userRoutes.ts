@@ -20,17 +20,19 @@ import {
   changeAvailability,
   getBlockedDates,
   rateUser,
+  getHostReviews,
+  getGuestReviews,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
 import { passwordResetLimiter } from "../utils/limiters";
 
 router.get("/users/current-user/phone", authToken, getUserPhone);
+router.get("/users/current-user/profile", authToken, getCurrentUserProfile);
 router.get("/users/current-user/wishlists", authToken, getWishlists);
+router.get("/users/host-blocked-dates", authToken, getBlockedDates);
 router.get("/users/search-user/:username", authToken, searchUsername);
 router.get("/users/profile/visit/:userID", authToken, visitUserProfile);
-router.get("/users/current-user/profile", authToken, getCurrentUserProfile);
-router.get("/users/host-blocked-dates", authToken, getBlockedDates);
 router.post("/users/login", logInUser);
 router.post(
   "/users/email-check",

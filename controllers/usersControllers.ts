@@ -136,7 +136,27 @@ export const visitUserProfile: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "No account with that id");
     }
 
-    res.status(200).json({ user, isBlocker: isBlocker != null });
+    const userRating = await Ratings.find({
+      $or: [
+        {
+          guestID: userID,
+        },
+        {
+          hostID: userID,
+        },
+      ],
+    }).populate([
+      {
+        path: "hostID",
+        select: "username photoUrl",
+      },
+      {
+        path: "guestID",
+        select: "username photoUrl",
+      },
+    ]);
+
+    res.status(200).json({ user, isBlocker: isBlocker != null, userRating });
   } catch (error) {
     next(error);
   }
@@ -556,13 +576,44 @@ export const rateUser: RequestHandler = async (req, res, next) => {
       hostID,
       guestID,
       reservationID,
+      $or: [
+        {
+          guestFeedback: {
+            $exists: true,
+          },
+        },
+        {
+          hostFeedback: {
+            $exists: true,
+          },
+        },
+        {
+          guestRating: {
+            $exists: true,
+          },
+        },
+        {
+          hostRating: {
+            $exists: true,
+          },
+        },
+      ],
     });
 
     if (ratingExist) {
-      throw createHttpError(
-        400,
-        "You've already sent a rating to this service."
-      );
+      const updateRating = await ratingExist.updateOne({
+        ...req.body,
+      });
+
+      await Users.findByIdAndUpdate(id, {
+        $push: {
+          rating: [updateRating._id],
+        },
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Thank you for submitting your review." });
     }
 
     const reservationOngoing = await Reservations.findOne({
@@ -592,6 +643,80 @@ export const rateUser: RequestHandler = async (req, res, next) => {
     });
 
     res.status(200).json({ message: "Thank you for submitting your review." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getHostReviews: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const limit = 10;
+  const page = parseInt(req.params.page ?? "1") ?? 1;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const hostRatings = await Ratings.find({
+      hostID: id,
+    })
+      .populate([
+        { path: "guestID", select: "username email photoUrl" },
+        {
+          path: "reservationID",
+          populate: {
+            path: "listingID",
+            select: "serviceTitle",
+          },
+        },
+      ])
+      .sort({ createdAt: "desc" })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
+
+    res.status(200).json({ hostRatings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getGuestReviews: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const limit = 10;
+  const page = parseInt(req.params.page ?? "1") ?? 1;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const hostRatings = await Ratings.find({
+      guestID: id,
+    })
+      .populate([
+        { path: "hostID", select: "username email photoUrl" },
+        {
+          path: "reservationID",
+          populate: {
+            path: "listingID",
+            select: "serviceTitle",
+          },
+        },
+      ])
+      .sort({ createdAt: "desc" })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
+
+    res.status(200).json({ hostRatings });
   } catch (error) {
     next(error);
   }

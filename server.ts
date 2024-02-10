@@ -21,6 +21,7 @@ import { createTransport } from "nodemailer";
 import { blockedUsersRoutes } from "./routes/blockUsersRoutes";
 import serverless from "serverless-http";
 import express from "express";
+import { ratingRoutes } from "./routes/ratingRoutes";
 
 const app = express();
 const server = app
@@ -33,7 +34,11 @@ const server = app
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://i-got-you-client-nxqt.vercel.app/"],
+    origin: [
+      "https://i-got-you-client-nxqt.vercel.app",
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
     credentials: true,
   },
 });
@@ -147,7 +152,7 @@ app.get("/", (_, res, __) => {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["*"],
+    origin: ["http://localhost:5173", "http://localhost:5174", env.CLIENT_URL],
     credentials: true,
   })
 );
@@ -168,6 +173,7 @@ app.use("/api", identityRoutes);
 app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
 app.use("/api", blockedUsersRoutes);
+app.use("/api", ratingRoutes);
 app.use(errorHandler);
 
 cron.schedule("0 8 * * *", async () => {

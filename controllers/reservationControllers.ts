@@ -6,6 +6,7 @@ import BookingRequests from "../models/BookingRequests";
 import HostNotifications from "../models/HostNotifications";
 import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
+import { emailServiceCancellationApproval } from "../utils/emails/emailServiceCancellationApproval";
 
 export const getCurrentReservation: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
@@ -228,7 +229,7 @@ export const getCurrentReservationDetails: RequestHandler = async (
       throw createHttpError(400, "No reservation with that ID.");
     }
 
-    const hasRating = await Ratings.findById(reservationID);
+    const hasRating = await Ratings.findOne({ reservationID });
 
     res.status(200).json({
       reservationDetails,
@@ -453,6 +454,20 @@ export const requestServiceCancellation: RequestHandler = async (
       throw createHttpError(400, "No reservation with that ID");
     }
 
+    const alreadySentCancellationRequest = await BookingRequests.findOne({
+      reservationID,
+      type: "Service-Cancellation-Request",
+      guestID: id,
+      listingID: reservation?.listingID,
+    });
+
+    if (alreadySentCancellationRequest) {
+      throw createHttpError(
+        400,
+        "Request service cancellation already been sent."
+      );
+    }
+
     const newServiceCancellationRequest = await BookingRequests.create({
       guestID: id,
       hostID: reservation?.hostID,
@@ -489,6 +504,83 @@ export const requestServiceCancellation: RequestHandler = async (
   }
 };
 
+export const serviceCancellationRequestApproval: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  const id = req.cookies["_&!d"];
+  const { reservationID } = req.params;
+  const { hostCancellationReason } = req.body;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const hasServiceCancellationRequestFromGuest =
+      await BookingRequests.findOne({
+        reservationID,
+        type: "Service-Cancellation-Request",
+      });
+
+    if (!hasServiceCancellationRequestFromGuest) {
+      throw createHttpError(400, "No service cancellation request from guest.");
+    }
+
+    const reservationAlreadyCancelled = await Reservations.findOne({
+      _id: reservationID,
+      status: "cancelled",
+      confirmServiceEnded: true,
+    });
+
+    if (reservationAlreadyCancelled) {
+      throw createHttpError(400, "Reservation already cancelled.");
+    }
+
+    const cancelledReservation = await Reservations.findByIdAndUpdate(
+      reservationID,
+      {
+        status: "cancelled",
+        confirmServiceEnded: true,
+        hostCancellationReason,
+      }
+    ).populate([
+      {
+        select: "serviceTitle",
+        path: "listingID",
+      },
+      {
+        select: "email",
+        path: "guestID",
+      },
+    ]);
+
+    await transport.sendMail({
+      subject: `Request Reservation Cancellation for ${
+        (cancelledReservation.listingID as { serviceTitle: string })
+          .serviceTitle
+      } Approved`,
+      to: (cancelledReservation.guestID as { email: string }).email,
+      html: emailServiceCancellationApproval(),
+    });
+
+    res.status(200).json({ message: "Reservation has been cancelled." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const confirmServiceEnded: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { reservationID } = req.params;
@@ -499,7 +591,6 @@ export const confirmServiceEnded: RequestHandler = async (req, res, next) => {
       pass: env.APP_PASSWORD,
     },
   });
-
   try {
     if (!id) {
       res.clearCookie("_&!d");
@@ -509,11 +600,65 @@ export const confirmServiceEnded: RequestHandler = async (req, res, next) => {
       );
     }
 
+    const serviceOngoing = await Reservations.findOne({
+      _id: reservationID,
+      fullPaymentVerificationStatus: "pending",
+    });
+
+    if (serviceOngoing) {
+      throw createHttpError(400, "Your payment is not still not verified.");
+    }
+
     await Reservations.findByIdAndUpdate(reservationID, {
       confirmServiceEnded: true,
+      status: "completed",
     });
 
     res.status(200).json({ message: "Service is now confirmed done." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendRequestPayout: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { reservationID } = req.params;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const reservation = await Reservations.findById(reservationID).populate([
+      {
+        path: "hostID",
+        select: "username email",
+      },
+      {
+        path: "listingID",
+        select: "serviceTitle",
+      },
+    ]);
+
+    await transport.sendMail({
+      subject: `Service Payout Request for ${
+        (reservation.listingID as { serviceTitle: string }).serviceTitle
+      }`,
+      to: env.ADMIN_EMAIL,
+      html: emailServiceCancellationApproval(),
+    });
+
+    res.status(200).json({ message: "Service request payout has been sent." });
   } catch (error) {
     next(error);
   }

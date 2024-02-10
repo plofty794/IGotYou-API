@@ -21,6 +21,10 @@ const listingAssetsSchema = new Schema({
     type: String,
     enum: ["audio", "video", "image"],
   },
+  format: {
+    type: String,
+    required: true,
+  },
 });
 
 const listingSchema = new Schema(

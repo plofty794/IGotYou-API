@@ -218,12 +218,43 @@ export const getHostBookingRequests: RequestHandler = async (
   const id = req.cookies["_&!d"];
   const limit = 10;
   const page = parseInt(req.params.page ?? "1") ?? 1;
+  const { status, requestedBookingDateStartsAt, requestedBookingDateEndsAt } =
+    req.query;
   try {
     if (!id) {
       clearCookieAndThrowError(
         res,
         "A _id cookie is required to access this resource."
       );
+    }
+
+    if (
+      status != "" ||
+      requestedBookingDateStartsAt != "" ||
+      requestedBookingDateEndsAt != ""
+    ) {
+      const bookingRequests = await BookingRequests.find({
+        hostID: id,
+        status,
+        requestedBookingDateStartsAt: {
+          $gte: new Date(requestedBookingDateStartsAt.toString()),
+        },
+        requestedBookingDateEndsAt: {
+          $lte: new Date(requestedBookingDateEndsAt.toString()),
+        },
+      })
+        .sort({ createdAt: "desc" })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate([
+          { path: "listingID" },
+          { select: "username photoUrl", path: "guestID" },
+        ])
+        .exec();
+
+      const totalPages = Math.ceil(bookingRequests.length / limit);
+
+      return res.status(200).json({ bookingRequests, totalPages });
     }
 
     const bookingRequests = await BookingRequests.find({ hostID: id })

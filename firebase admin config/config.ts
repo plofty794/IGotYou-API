@@ -15,7 +15,6 @@ const app = initializeApp({
       ),
     projectId: "igotyou-399523",
   }),
-  databaseURL: "igotyou-399523",
 });
 
 export const auth = getAuth(app);

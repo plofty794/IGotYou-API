@@ -2,9 +2,13 @@ import { Schema, model, Types } from "mongoose";
 
 const ratingSchema = new Schema(
   {
-    userRating: {
+    guestRating: {
       type: Number,
-      required: true,
+      min: 1,
+      max: 5,
+    },
+    hostRating: {
+      type: Number,
       min: 1,
       max: 5,
     },
@@ -18,7 +22,10 @@ const ratingSchema = new Schema(
       ref: "Users",
       required: true,
     },
-    feedback: {
+    guestFeedback: {
+      type: String,
+    },
+    hostFeedback: {
       type: String,
     },
     reservationID: {
