@@ -12,6 +12,7 @@ import {
   getHostBookingRequests,
   reAttemptBookingRequest,
   searchGuestBookingRequest,
+  searchGuestName,
   sendBookingRequest,
 } from "../controllers/bookingRequestsControllers";
 import { authToken } from "../middlewares/authToken";
@@ -49,6 +50,7 @@ router.get(
   authToken,
   getGuestCancelledBookingRequests
 );
+router.get("/search-guest/:username", authToken, searchGuestName);
 router.post(
   "/guest-send-booking-request/:listingID",
   authToken,

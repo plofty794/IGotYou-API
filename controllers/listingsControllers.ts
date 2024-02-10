@@ -104,8 +104,6 @@ export const getListings: RequestHandler = async (req, res, next) => {
       { status: "Active" }
     );
 
-    console.log(minPrice, maxPrice, serviceType);
-
     if (minPrice != null || maxPrice != null || serviceType != null) {
       const listings = await Listings.find({
         $and: [
@@ -155,6 +153,7 @@ export const getListings: RequestHandler = async (req, res, next) => {
       .populate({
         path: "host",
         select: "username rating wishlists uid",
+        populate: "rating",
         match: {
           subscriptionExpiresAt: {
             $gt: new Date(),
@@ -204,6 +203,7 @@ export const getListingsPerCategory: RequestHandler = async (
       .populate({
         path: "host",
         select: "username rating wishlists uid",
+        populate: "rating",
         match: {
           subscriptionExpiresAt: {
             $gt: new Date(),
@@ -241,6 +241,7 @@ export const getUserListing: RequestHandler = async (req, res, next) => {
     const listing = await Listings.findById(listingID).populate([
       {
         path: "host",
+        populate: "rating",
         select: "username photoUrl rating subscriptionExpiresAt",
       },
       {

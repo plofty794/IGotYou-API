@@ -128,6 +128,7 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
 
     const hasReservation = await Reservations.findOne({
       hostID,
+      listingID,
       $and: [
         {
           bookingStartsAt: { $lte: requestedBookingDateEndsAt },
@@ -748,6 +749,47 @@ export const reAttemptBookingRequest: RequestHandler = async (
         }
       ).username,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const searchGuestName: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { username } = req.params;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const userDetails = await Users.find({
+      _id: {
+        $ne: id,
+      },
+      username: {
+        $regex: username,
+        $options: "mi",
+      },
+    })
+      .select("username _id photoUrl email")
+      .exec();
+
+    const bookingRequests = await BookingRequests.find({
+      hostID: id,
+    }).populate({ path: "guestID", select: "username photoUrl email" });
+
+    const guestNames = userDetails.flatMap((user) =>
+      bookingRequests.filter(
+        (request) =>
+          user.username == (request.guestID as { username: string }).username
+      )
+    );
+
+    res.status(200).json({ guestNames });
   } catch (error) {
     next(error);
   }

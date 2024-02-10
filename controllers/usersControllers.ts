@@ -321,6 +321,9 @@ export const searchUsername: RequestHandler = async (req, res, next) => {
     }
 
     const userDetails = await Users.find({
+      _id: {
+        $ne: id,
+      },
       username: {
         $regex: username,
         $options: "mi",
