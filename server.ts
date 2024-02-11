@@ -35,7 +35,7 @@ const server = app
 const io = new Server(server, {
   cors: {
     origin: [
-      "https://i-got-you-client-nxqt.vercel.app",
+      "http://ec2-13-236-193-133.ap-southeast-2.compute.amazonaws.com/",
       "http://localhost:5173",
       "http://localhost:5174",
     ],
@@ -152,7 +152,12 @@ app.get("/", (_, res, __) => {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", env.CLIENT_URL],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      env.CLIENT_URL,
+      "http://ec2-13-236-193-133.ap-southeast-2.compute.amazonaws.com/",
+    ],
     credentials: true,
   })
 );

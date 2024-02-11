@@ -1,8 +1,6 @@
 import admin from "firebase-admin";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import env from "../utils/envalid";
-import path from "path";
 
 const app = initializeApp({
   credential: cert({
