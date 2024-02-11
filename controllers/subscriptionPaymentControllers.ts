@@ -113,7 +113,7 @@ export const sendSubscriptionPayment: RequestHandler = async (
 
     await transport.sendMail({
       from: user?.email,
-      to: "aceguevarra48@gmail.com",
+      to: env.ADMIN_EMAIL,
       subject: "IGotYou - Subscription Request",
       html: emailSubscriptionRequest(
         user?.username!,
@@ -209,7 +209,6 @@ export const updateSubscriptionPhotosStatus: RequestHandler = async (
         { new: true }
       );
       await transport.sendMail({
-        from: "aceguevarra48@gmail.com",
         to: updatedUserSubscription?.email,
         subject: "IGotYou - Subscription Payment Update",
         html: emailPaymentSuccess(
@@ -233,7 +232,6 @@ export const updateSubscriptionPhotosStatus: RequestHandler = async (
         { new: true }
       );
       await transport.sendMail({
-        from: "aceguevarra48@gmail.com",
         to: updatedUserSubscription?.email,
         subject: "IGotYou - Subscription Payment Update",
         html: emailPaymentReject(

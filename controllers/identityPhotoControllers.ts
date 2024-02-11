@@ -85,7 +85,7 @@ export const sendIdentityVerificationRequest: RequestHandler = async (
     });
 
     await transport.sendMail({
-      to: "aceguevarra48@gmail.com",
+      to: env.ADMIN_EMAIL,
       subject: "IGotYou - Identity Verification Request",
       html: emailIdentityVerificationRequest(
         user?.username!,

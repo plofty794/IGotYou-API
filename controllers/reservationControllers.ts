@@ -7,6 +7,7 @@ import HostNotifications from "../models/HostNotifications";
 import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
 import { emailServiceCancellationApproval } from "../utils/emails/emailServiceCancellationApproval";
+import { emailRequestPayout } from "../utils/emails/emailRequestPayout";
 
 export const getCurrentReservation: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
@@ -564,6 +565,10 @@ export const serviceCancellationRequestApproval: RequestHandler = async (
         select: "email",
         path: "guestID",
       },
+      {
+        select: "email username",
+        path: "hostID",
+      },
     ]);
 
     await transport.sendMail({
@@ -572,7 +577,16 @@ export const serviceCancellationRequestApproval: RequestHandler = async (
           .serviceTitle
       } Approved`,
       to: (cancelledReservation.guestID as { email: string }).email,
-      html: emailServiceCancellationApproval(),
+      html: emailServiceCancellationApproval(
+        reservationID,
+        [
+          cancelledReservation.bookingStartsAt.toDateString(),
+          cancelledReservation.bookingEndsAt.toDateString(),
+        ],
+        (cancelledReservation.hostID as { username: string }).username,
+        (cancelledReservation.listingID as { serviceTitle: string })
+          .serviceTitle
+      ),
     });
 
     res.status(200).json({ message: "Reservation has been cancelled." });
@@ -645,6 +659,10 @@ export const sendRequestPayout: RequestHandler = async (req, res, next) => {
         select: "username email",
       },
       {
+        path: "guestID",
+        select: "username email",
+      },
+      {
         path: "listingID",
         select: "serviceTitle",
       },
@@ -655,7 +673,16 @@ export const sendRequestPayout: RequestHandler = async (req, res, next) => {
         (reservation.listingID as { serviceTitle: string }).serviceTitle
       }`,
       to: env.ADMIN_EMAIL,
-      html: emailServiceCancellationApproval(),
+      html: emailRequestPayout(
+        (reservation.listingID as { serviceTitle: string }).serviceTitle,
+        [
+          reservation.bookingStartsAt.toDateString(),
+          reservation.bookingEndsAt.toDateString(),
+        ],
+        (reservation.guestID as { username: string }).username,
+        reservation.paymentAmount,
+        (reservation.hostID as { username: string }).username
+      ),
     });
 
     res.status(200).json({ message: "Service request payout has been sent." });

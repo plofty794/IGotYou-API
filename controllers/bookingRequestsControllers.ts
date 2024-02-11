@@ -669,7 +669,9 @@ export const acceptBookingRequest: RequestHandler = async (req, res, next) => {
         to: (approvedBookingRequests?.guestID as { email: string }).email,
         subject: "Booking Request Update",
         html: emailBookingRequestAccepted(
-          (approvedBookingRequests?.guestID as { username: string }).username
+          (approvedBookingRequests?.guestID as { username: string }).username,
+          (approvedBookingRequests.listingID as { serviceTitle: string })
+            .serviceTitle
         ),
       }),
       transport.sendMail({
