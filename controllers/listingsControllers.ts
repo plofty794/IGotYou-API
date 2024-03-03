@@ -306,7 +306,6 @@ export const addListing: RequestHandler = async (req, res, next) => {
 export const editListing: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { listingID } = req.params;
-  console.log(req.body);
   try {
     if (!id) {
       clearCookieAndThrowError(
@@ -331,7 +330,7 @@ export const editListing: RequestHandler = async (req, res, next) => {
     if (hasReservation) {
       throw createHttpError(
         400,
-        "Existing reservation scheduled for this listing."
+        "Reservation/s scheduled exists for this listing."
       );
     }
 

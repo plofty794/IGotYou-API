@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   getGuestNotifications,
   getHostNotifications,
-  readBookingRequestNotification,
+  readGuestBookingRequestNotification,
+  readHostBookingRequestNotification,
   updateGuestNotification,
 } from "../controllers/notificationControllers";
 const router = Router();
@@ -14,8 +15,12 @@ router.patch(
   updateGuestNotification
 );
 router.patch(
-  "/users/current-user/notifications/read-booking-request-notification/:notificationID",
-  readBookingRequestNotification
+  "/users/current-user/notifications/read-guest-booking-request-notification/:notificationID",
+  readGuestBookingRequestNotification
+);
+router.patch(
+  "/users/current-user/notifications/read-host-booking-request-notification/:notificationID",
+  readHostBookingRequestNotification
 );
 
 export { router as notificationRoutes };

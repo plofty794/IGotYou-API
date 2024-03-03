@@ -100,7 +100,7 @@ export const updateGuestNotification: RequestHandler = async (
   }
 };
 
-export const readBookingRequestNotification: RequestHandler = async (
+export const readGuestBookingRequestNotification: RequestHandler = async (
   req,
   res,
   next
@@ -117,6 +117,32 @@ export const readBookingRequestNotification: RequestHandler = async (
     }
 
     await GuestNotifications.findByIdAndUpdate(notificationID, {
+      read: true,
+    });
+
+    res.status(200).json({ message: "read notification" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const readHostBookingRequestNotification: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  const id = req.cookies["_&!d"];
+  const { notificationID } = req.params;
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    await HostNotifications.findByIdAndUpdate(notificationID, {
       read: true,
     });
 

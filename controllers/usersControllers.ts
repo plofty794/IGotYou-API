@@ -122,13 +122,31 @@ export const visitUserProfile: RequestHandler = async (req, res, next) => {
       .select(
         "-password -providerId -uid -hostNotifications -guestNotifications -subscriptionStatus -bookingRequests -wishlists -identityVerificationStatus"
       )
-      .populate({
-        path: "listings",
-        select: "listingAssets serviceTitle serviceType",
-        options: {
-          limit: 10,
+      .populate([
+        {
+          path: "listings",
+          select: "listingAssets serviceTitle serviceType",
+          options: {
+            limit: 10,
+          },
         },
-      })
+        {
+          path: "rating",
+          populate: [
+            {
+              path: "guestID",
+              select: "username email",
+            },
+            {
+              path: "hostID",
+              select: "username email",
+            },
+          ],
+          options: {
+            limit: 10,
+          },
+        },
+      ])
       .sort({ createdAt: "desc" })
       .exec();
 
@@ -136,27 +154,7 @@ export const visitUserProfile: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "No account with that id");
     }
 
-    const userRating = await Ratings.find({
-      $or: [
-        {
-          guestID: userID,
-        },
-        {
-          hostID: userID,
-        },
-      ],
-    }).populate([
-      {
-        path: "hostID",
-        select: "username photoUrl",
-      },
-      {
-        path: "guestID",
-        select: "username photoUrl",
-      },
-    ]);
-
-    res.status(200).json({ user, isBlocker: isBlocker != null, userRating });
+    res.status(200).json({ user, isBlocker: isBlocker != null });
   } catch (error) {
     next(error);
   }
@@ -575,48 +573,28 @@ export const rateUser: RequestHandler = async (req, res, next) => {
       );
     }
 
-    const ratingExist = await Ratings.findOne({
+    const hostRatingExist = await Ratings.findOne({
+      reservationID,
       hostID,
       guestID,
-      reservationID,
-      $or: [
-        {
-          guestFeedback: {
-            $exists: true,
-          },
-        },
-        {
-          hostFeedback: {
-            $exists: true,
-          },
-        },
-        {
-          guestRating: {
-            $exists: true,
-          },
-        },
-        {
-          hostRating: {
-            $exists: true,
-          },
-        },
-      ],
+      hostFeedback: req.body.hostFeedback,
+      hostRating: req.body.hostRating,
     });
 
-    if (ratingExist) {
-      const updateRating = await ratingExist.updateOne({
-        ...req.body,
-      });
+    if (hostRatingExist) {
+      throw createHttpError(400, "You've already rated this guest.");
+    }
 
-      await Users.findByIdAndUpdate(id, {
-        $push: {
-          rating: [updateRating._id],
-        },
-      });
+    const guestRatingExist = await Ratings.findOne({
+      reservationID,
+      hostID,
+      guestID,
+      guestFeedback: req.body.guestFeedback,
+      guestRating: req.body.guestRating,
+    });
 
-      return res
-        .status(200)
-        .json({ message: "Thank you for submitting your review." });
+    if (guestRatingExist) {
+      throw createHttpError(400, "You've already rated this host.");
     }
 
     const reservationOngoing = await Reservations.findOne({
@@ -639,13 +617,21 @@ export const rateUser: RequestHandler = async (req, res, next) => {
       ...req.body,
     });
 
-    await Users.findByIdAndUpdate(id, {
-      $push: {
-        rating: [newRating],
-      },
-    });
+    if (req.body.guestFeedback) {
+      await Users.findByIdAndUpdate(hostID, {
+        $push: {
+          rating: [newRating._id],
+        },
+      });
+    } else {
+      await Users.findByIdAndUpdate(guestID, {
+        $push: {
+          rating: [newRating._id],
+        },
+      });
+    }
 
-    res.status(200).json({ message: "Thank you for submitting your review." });
+    res.status(200).json({ message: "Service review has been sent." });
   } catch (error) {
     next(error);
   }
@@ -666,6 +652,18 @@ export const getHostReviews: RequestHandler = async (req, res, next) => {
 
     const hostRatings = await Ratings.find({
       hostID: id,
+      $and: [
+        {
+          guestFeedback: {
+            $ne: null,
+          },
+        },
+        {
+          guestRating: {
+            $ne: null,
+          },
+        },
+      ],
     })
       .populate([
         { path: "guestID", select: "username email photoUrl" },
