@@ -167,10 +167,10 @@ app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
 app.use("/api", blockedUsersRoutes);
 app.use("/api", ratingRoutes);
-app.use(errorHandler);
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname + "/client/dist/index.html"));
+  res.sendFile(path.join(__dirname + "/client/views/dist/index.html"));
 });
+app.use(errorHandler);
 
 cron.schedule("0 8 * * *", async () => {
   const transport = createTransport({
