@@ -9,34 +9,10 @@ import BlockedUsers from "../models/BlockedUsers";
 import BlockedDates from "../models/BlockedDates";
 import Ratings from "../models/Ratings";
 import Reservations from "../models/Reservations";
-
-// export const getHosts: RequestHandler = async (req, res, next) => {
-//   const id = req.cookies["_&!d"];
-//   try {
-//     if (!id) {
-//       clearCookieAndThrowError(
-//         res,
-//         "A _id cookie is required to access this resource."
-//       );
-//     }
-
-//     const hosts = await Listings.find({
-//       $function: function () {
-//         return (
-//           new Date(this.availableAt).getTime() <= Date.now() &&
-//           new Date(this.endsAt).getTime() >= Date.now()
-//         );
-//       },
-//     }).populate("host");
-
-//     if (!hosts.length) {
-//       return res.status(200).json({ hosts: [] });
-//     }
-//     res.status(200).json({ hosts });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+import Reports from "../models/Reports";
+import { emailReportUser } from "../utils/emails/emailReportUser";
+import { createTransport } from "nodemailer";
+import env from "../utils/envalid";
 
 export const getUserPhone: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
@@ -718,6 +694,69 @@ export const getGuestReviews: RequestHandler = async (req, res, next) => {
       .exec();
 
     res.status(200).json({ hostRatings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const submitReport: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL,
+      pass: env.APP_PASSWORD,
+    },
+  });
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const reporterName = await Users.findById(id).select("username email");
+
+    const reportExist = await Reports.findOne({
+      reporter: id,
+      reportedUser: req.body.reportedUser,
+    });
+
+    if (reportExist) {
+      throw createHttpError(400, "You've already reported this user.");
+    }
+
+    const newReport = await Reports.create({
+      ...req.body,
+      reporter: id,
+    });
+
+    await newReport.populate({
+      path: "reportedUser",
+      select: "email username",
+    });
+
+    await Users.findByIdAndUpdate(req.body.reportedUser, {
+      $push: {
+        reports: [newReport._id],
+      },
+    });
+
+    await transport.sendMail({
+      to: env.ADMIN_EMAIL,
+      subject: "IGotYou - Important User Report",
+      html: emailReportUser(
+        reporterName.email,
+        reporterName.username,
+        (newReport.reportedUser as { username: string }).username,
+        req.body.reason,
+        req.body.evidence.secure_url
+      ),
+    });
+
+    return res.status(200).json({ message: "Report has been submitted." });
   } catch (error) {
     next(error);
   }

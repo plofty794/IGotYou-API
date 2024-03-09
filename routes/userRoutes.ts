@@ -22,6 +22,7 @@ import {
   rateUser,
   getHostReviews,
   getGuestReviews,
+  submitReport,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
@@ -33,6 +34,7 @@ router.get("/users/current-user/wishlists", authToken, getWishlists);
 router.get("/users/host-blocked-dates", authToken, getBlockedDates);
 router.get("/users/search-user/:username", authToken, searchUsername);
 router.get("/users/profile/visit/:userID", authToken, visitUserProfile);
+router.post("/users/submit-report", authToken, submitReport);
 router.post("/users/login", logInUser);
 router.post(
   "/users/email-check",

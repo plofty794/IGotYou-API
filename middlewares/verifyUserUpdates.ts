@@ -4,6 +4,7 @@ import Users from "../models/Users";
 
 type TUserUpdates = {
   username?: string;
+  email?: string;
   address?: string;
   school?: string;
   work?: string;
@@ -16,7 +17,7 @@ export const verifyUserUpdates = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, mobilePhone }: TUserUpdates = req.body;
+  const { username, mobilePhone, email }: TUserUpdates = req.body;
   // const postcode = address?.match(/\d{4}/g)?.join("");
   // const country_code = address?.match(/[A-Z]+$/g)?.join("");
 
@@ -30,6 +31,13 @@ export const verifyUserUpdates = async (
 
     if (usernameExist) {
       return next(createHttpError(409, "Username already exist"));
+    }
+  }
+
+  if (email) {
+    const emailExist = await Users.findOne({ email });
+    if (emailExist) {
+      return next(createHttpError(409, "Email already exist"));
     }
   }
 

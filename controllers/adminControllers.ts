@@ -3,7 +3,6 @@ import Admin from "../models/Admin";
 import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import Users from "../models/Users";
-import Reservations from "../models/Reservations";
 import SubscriptionPayments from "../models/SubscriptionPayments";
 
 export const getActiveUsers: RequestHandler = async (req, res, next) => {

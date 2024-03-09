@@ -94,6 +94,10 @@ const usersSchema = new Schema(
       type: [Types.ObjectId],
       ref: "Listings",
     },
+    reports: {
+      type: [Types.ObjectId],
+      ref: "Reports",
+    },
   },
   { timestamps: true }
 );

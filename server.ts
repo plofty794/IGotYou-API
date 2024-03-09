@@ -19,10 +19,8 @@ import { addDays } from "date-fns";
 import cron from "node-cron";
 import { createTransport } from "nodemailer";
 import { blockedUsersRoutes } from "./routes/blockUsersRoutes";
-import serverless from "serverless-http";
 import express from "express";
 import { ratingRoutes } from "./routes/ratingRoutes";
-import path from "path";
 
 const app = express();
 const server = app
@@ -35,7 +33,7 @@ const server = app
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://igot-you.online/"],
+    origin: ["http://localhost:5173", env.CLIENT_URL],
     credentials: true,
   },
 });
@@ -145,7 +143,7 @@ io.on("connection", (socket) => {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://igot-you.online/"],
+    origin: ["http://localhost:5173", env.CLIENT_URL],
     credentials: true,
   })
 );
@@ -155,6 +153,7 @@ app.use(
     extended: false,
   })
 );
+
 app.use("/api", userRoutes);
 app.use("/api", listingRoutes);
 app.use("/api", assetRoutes);
@@ -167,10 +166,10 @@ app.use("/api", reservationRoutes);
 app.use("/api", bookingRequestRoutes);
 app.use("/api", blockedUsersRoutes);
 app.use("/api", ratingRoutes);
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname + "/client/views/dist/index.html"));
-});
 app.use(errorHandler);
+app.get("*", (req, res) => {
+  res.sendFile(env.CADDY_CLIENT_PATH);
+});
 
 cron.schedule("0 8 * * *", async () => {
   const transport = createTransport({
@@ -196,7 +195,7 @@ cron.schedule("0 8 * * *", async () => {
         await transport.sendMail({
           to: user.email,
           subject: "Subscription Status Update",
-          html: "<p>Hello, world</p>",
+          html: "<p>Patapos na ang subscription mo!</p><p>Subscribe ka ulit sa IGotYou Hosting!</p>",
         });
       })
     );
@@ -204,5 +203,3 @@ cron.schedule("0 8 * * *", async () => {
     console.error(error);
   }
 });
-
-export const handler = serverless(app);
