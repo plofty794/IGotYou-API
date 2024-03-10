@@ -98,6 +98,10 @@ const usersSchema = new Schema(
       type: [Types.ObjectId],
       ref: "Reports",
     },
+    isDisabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

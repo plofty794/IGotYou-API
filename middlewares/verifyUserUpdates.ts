@@ -27,7 +27,9 @@ export const verifyUserUpdates = async (
   // }
 
   if (username) {
-    const usernameExist = await Users.findOne({ username });
+    const usernameExist = await Users.findOne({
+      username: { $regex: username, $options: "i" },
+    });
 
     if (usernameExist) {
       return next(createHttpError(409, "Username already exist"));

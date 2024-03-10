@@ -4,6 +4,8 @@ import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import Users from "../models/Users";
 import SubscriptionPayments from "../models/SubscriptionPayments";
+import Reports from "../models/Reports";
+import { auth } from "firebase-admin";
 
 export const getActiveUsers: RequestHandler = async (req, res, next) => {
   const admin_id = req.cookies.admin_id;
@@ -46,7 +48,7 @@ export const getUsers: RequestHandler = async (req, res, next) => {
       username: { $ne: null },
     })
       .select(
-        "username email userStatus emailVerified identityVerified mobilePhone mobileVerified createdAt"
+        "uid username email userStatus emailVerified identityVerified mobilePhone mobileVerified createdAt isDisabled"
       )
       .skip((page - 1) * limit)
       .limit(limit)
@@ -57,7 +59,7 @@ export const getUsers: RequestHandler = async (req, res, next) => {
     const totalPages = Math.ceil(totalUsers / limit);
 
     if (!users.length) {
-      return res.status(200).json({ users: [], totalPages: 0 });
+      return res.status(200).json({ users: [], totalPages: 0, totalUsers: 0 });
     }
     res.status(200).json({ users, totalPages, totalUsers });
   } catch (error) {
@@ -156,6 +158,115 @@ export const getAdminOverview: RequestHandler = async (req, res, next) => {
       .limit(5);
 
     res.status(200).json({ allUsers, subscribedUsers });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserReports: RequestHandler = async (req, res, next) => {
+  const admin_id = req.cookies.admin_id;
+  const limit = 10;
+  const page = parseInt(req.params.page ?? "1") ?? 1;
+
+  try {
+    if (!admin_id) {
+      throw createHttpError(401, "This action requires an identifier");
+    }
+
+    const userReports = await Reports.find({})
+      .skip((page - 1) * limit)
+      .populate([
+        {
+          path: "reporter",
+          select:
+            "username email userStatus reports emailVerified identityVerified isDisabled uid",
+        },
+        {
+          path: "reportedUser",
+          select:
+            "username email userStatus reports emailVerified identityVerified isDisabled uid",
+        },
+      ])
+      .limit(limit)
+      .sort({ createdAt: "desc" })
+      .exec();
+
+    const totalReports = await Reports.countDocuments();
+    const totalPages = Math.ceil(totalReports / limit);
+
+    if (!userReports.length) {
+      return res
+        .status(200)
+        .json({ userReports: [], totalPages: 0, totalReports: 0 });
+    }
+    res.status(200).json({ userReports, totalPages, totalReports });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const adminLogOut: RequestHandler = async (req, res, next) => {
+  const admin_id = req.cookies.admin_id;
+  try {
+    if (!admin_id) {
+      throw createHttpError(401, "This action requires an identifier");
+    }
+    const adminExist = await Admin.findById(admin_id);
+    if (!adminExist) {
+      throw createHttpError(400, "Invalid Admin ID!");
+    }
+    res.clearCookie("admin_id", { httpOnly: true });
+    res.status(200).json({ message: "Admin has been logged out" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const disableUser: RequestHandler = async (req, res, next) => {
+  const admin_id = req.cookies.admin_id;
+  const { userUID } = req.params;
+  try {
+    if (!admin_id) {
+      throw createHttpError(401, "This action requires an identifier");
+    }
+
+    await auth().updateUser(userUID, {
+      disabled: true,
+    });
+
+    await Users.findOneAndUpdate(
+      { uid: userUID },
+      {
+        isDisabled: true,
+      }
+    );
+
+    res.status(200).json({ message: "Account has been disabled." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const enableUser: RequestHandler = async (req, res, next) => {
+  const admin_id = req.cookies.admin_id;
+  const { userUID } = req.params;
+  try {
+    if (!admin_id) {
+      throw createHttpError(401, "This action requires an identifier");
+    }
+
+    await auth().updateUser(userUID, {
+      disabled: false,
+    });
+
+    await Users.findOneAndUpdate(
+      { uid: userUID },
+      {
+        isDisabled: false,
+      }
+    );
+
+    res.status(200).json({ message: "Account has been enabled." });
   } catch (error) {
     next(error);
   }

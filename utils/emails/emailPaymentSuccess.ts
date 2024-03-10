@@ -30,7 +30,7 @@ export const emailPaymentSuccess = (
 </head>
 <body>
 <div class="container">
-      
+            <h1>Subscription Payment Update</h1>
             <p >Hi ${name},</p>
             <p >I hope this email finds you well. We wanted to provide you with an important update regarding the status of your subscription payment.</p>
             <p >Great news! Your payment for IGotYou Hosting has been successfully processed. You can now switch from a guest to a host and continue enjoying all the benefits of your subscription, including creating and managing your own listing.</p>
