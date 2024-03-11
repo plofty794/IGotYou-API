@@ -5,6 +5,7 @@ const messagesSchema = new Schema(
     content: {
       type: String,
       required: true,
+      trim: true,
     },
     senderID: {
       type: Types.ObjectId,

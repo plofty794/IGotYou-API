@@ -45,9 +45,11 @@ const listingSchema = new Schema(
     serviceTitle: {
       type: String,
       required: true,
+      trim: true,
     },
     serviceDescription: {
       type: String,
+      trim: true,
     },
     listingAssets: {
       type: [listingAssetsSchema],

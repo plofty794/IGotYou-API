@@ -10,6 +10,7 @@ const usersSchema = new Schema(
     //User Details
     username: {
       type: String,
+      trim: true,
     },
     email: {
       type: String,
@@ -38,6 +39,7 @@ const usersSchema = new Schema(
     },
     address: {
       type: String,
+      trim: true,
     },
     educationalAttainment: {
       type: String,
@@ -53,9 +55,11 @@ const usersSchema = new Schema(
     },
     funFact: {
       type: String,
+      trim: true,
     },
     work: {
       type: String,
+      trim: true,
     },
     photoUrl: {
       type: String,

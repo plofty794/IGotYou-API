@@ -18,6 +18,8 @@ const bookingRequestsSchema = new Schema(
     },
     message: {
       type: String,
+      trim: true,
+      required: true,
     },
     status: {
       type: String,
