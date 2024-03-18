@@ -133,7 +133,7 @@ export const getPreviousReservations: RequestHandler = async (
       .skip((page - 1) * limit)
       .exec();
 
-    const totalPages = previousReservations.length / limit;
+    const totalPages = Math.ceil(previousReservations.length / limit);
 
     res.status(200).json({ previousReservations, totalPages });
   } catch (error) {
@@ -182,7 +182,7 @@ export const getReservations: RequestHandler = async (req, res, next) => {
       .skip((page - 1) * limit)
       .exec();
 
-    const totalPages = allReservations.length / limit;
+    const totalPages = Math.ceil(allReservations.length / limit);
 
     res.status(200).json({ allReservations, totalPages });
   } catch (error) {

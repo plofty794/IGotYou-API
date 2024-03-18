@@ -25,12 +25,10 @@ const ratingSchema = new Schema(
     guestFeedback: {
       type: String,
       trim: true,
-      required: true,
     },
     hostFeedback: {
       type: String,
       trim: true,
-      required: true,
     },
     reservationID: {
       type: Types.ObjectId,

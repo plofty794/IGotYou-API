@@ -143,7 +143,7 @@ io.on("connection", (socket) => {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", env.CLIENT_URL],
+    origin: ["http://localhost:5173", env.CLIENT_URL, env.ADMIN_URL],
     credentials: true,
   })
 );

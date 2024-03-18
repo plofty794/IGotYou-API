@@ -576,13 +576,12 @@ export const rateUser: RequestHandler = async (req, res, next) => {
     const reservationOngoing = await Reservations.findOne({
       _id: reservationID,
       confirmServiceEnded: false,
-      status: "ongoing",
     });
 
     if (reservationOngoing) {
       throw createHttpError(
         400,
-        "Ratings takes effect once the service and payment is complete."
+        "Ratings takes effect once the guest marks it as complete."
       );
     }
 
