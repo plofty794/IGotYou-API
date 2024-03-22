@@ -88,6 +88,13 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("message-guest", async (data) => {
+    const activeUser = findActiveUser(data.receiverName);
+    if (activeUser) {
+      io.to(activeUser.socketId).emit("receive-message", data.conversationID);
+    }
+  });
+
   socket.on("send-bookingRequest", (data) => {
     const activeUser = findActiveUser(data.receiverName);
     if (activeUser) {
