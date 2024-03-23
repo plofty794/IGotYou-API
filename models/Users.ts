@@ -106,6 +106,10 @@ const usersSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    hasWrittenFeedback: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

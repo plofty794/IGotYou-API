@@ -13,6 +13,7 @@ import Reports from "../models/Reports";
 import { emailReportUser } from "../utils/emails/emailReportUser";
 import { createTransport } from "nodemailer";
 import env from "../utils/envalid";
+import { emailUserFeedback } from "../utils/emails/emailUserFeedback";
 
 export const getUserPhone: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
@@ -756,6 +757,54 @@ export const submitReport: RequestHandler = async (req, res, next) => {
     });
 
     return res.status(200).json({ message: "Report has been submitted." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const writeFeedback: RequestHandler = async (req, res, next) => {
+  const id = req.cookies["_&!d"];
+  const { feedback } = req.body;
+  const transport = createTransport({
+    service: "gmail",
+    auth: {
+      user: env.ADMIN_EMAIL_FEEDBACK,
+      pass: env.FEEDBACK_PASSWORD,
+    },
+  });
+  try {
+    if (!id) {
+      res.clearCookie("_&!d");
+      throw createHttpError(
+        400,
+        "A _id cookie is required to access this resource."
+      );
+    }
+
+    const user = await Users.findById(id).select(
+      "username email hasWrittenFeedback"
+    );
+
+    if (user.hasWrittenFeedback) {
+      throw createHttpError(400, "You've already sent a feedback.");
+    }
+
+    await user.updateOne({
+      hasWrittenFeedback: true,
+    });
+
+    await transport.sendMail({
+      to: env.ADMIN_EMAIL_FEEDBACK,
+      subject: "IGotYou - Important User Feedback",
+      html: emailUserFeedback(
+        (user as { username: string }).username,
+        (user as { email: string }).email,
+        new Date().toDateString(),
+        feedback
+      ),
+    });
+
+    res.status(200).json({ message: "Feedback has been sent." });
   } catch (error) {
     next(error);
   }

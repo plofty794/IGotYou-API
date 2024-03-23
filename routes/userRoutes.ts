@@ -23,6 +23,7 @@ import {
   getHostReviews,
   getGuestReviews,
   submitReport,
+  writeFeedback,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
@@ -36,6 +37,7 @@ router.get("/users/search-user/:username", authToken, searchUsername);
 router.get("/users/profile/visit/:userID", authToken, visitUserProfile);
 router.post("/users/submit-report", authToken, submitReport);
 router.post("/users/login", logInUser);
+router.post("/users/write-a-feedback", authToken, writeFeedback);
 router.post(
   "/users/email-check",
   authToken,

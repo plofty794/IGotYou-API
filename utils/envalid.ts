@@ -14,5 +14,7 @@ export default cleanEnv(process.env, {
   ADMIN_URL: url(),
   APP_PASSWORD: str(),
   ADMIN_EMAIL: email(),
+  ADMIN_EMAIL_FEEDBACK: email(),
+  FEEDBACK_PASSWORD: str(),
   CADDY_CLIENT_PATH: str(),
 });
