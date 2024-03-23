@@ -71,8 +71,8 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
 
     const totalPages = Math.ceil(hostListings.length / limit);
 
-    if (!hostListings.length) {
-      return res.status(200).json({ hostListings: [], totalPages: 0 });
+    if (hostListings.length == 0) {
+      return res.status(400).json({ message: "Nothing more to load" });
     }
 
     res.status(200).json({ hostListings, totalPages });
@@ -83,7 +83,7 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
 
 export const getListings: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
-  const limit = 12;
+  const limit = 4;
   const { minPrice, maxPrice, serviceType } = req.query;
   const page = parseInt(req.params.page ?? "1") ?? 1;
   try {
@@ -135,13 +135,11 @@ export const getListings: RequestHandler = async (req, res, next) => {
         .sort({ createdAt: "desc" })
         .exec();
 
-      const totalPages = Math.ceil(listings.length / limit);
-
-      if (!listings.length) {
-        return res.status(200).json({ listings: [], totalPages: 0 });
+      if (listings.length == 0) {
+        return res.status(400).json({ message: "Nothing more to load" });
       }
 
-      return res.status(200).json({ listings, totalPages });
+      return res.status(200).json({ listings });
     }
 
     const listings = await Listings.find({
@@ -163,13 +161,11 @@ export const getListings: RequestHandler = async (req, res, next) => {
       .sort({ createdAt: "desc" })
       .exec();
 
-    const totalPages = Math.ceil(listings.length / limit);
-
-    if (!listings.length) {
-      return res.status(200).json({ listings: [], totalPages: 0 });
+    if (listings.length == 0) {
+      return res.status(400).json({ message: "Nothing more to load" });
     }
 
-    res.status(200).json({ listings, totalPages });
+    res.status(200).json({ listings });
   } catch (error) {
     next(error);
   }
@@ -181,7 +177,7 @@ export const getListingsPerCategory: RequestHandler = async (
   next
 ) => {
   const id = req.cookies["_&!d"];
-  const limit = 12;
+  const limit = 4;
   const page = parseInt(req.params.page ?? "1") ?? 1;
   const category = req.params.category;
 
@@ -213,11 +209,11 @@ export const getListingsPerCategory: RequestHandler = async (
       .sort({ createdAt: "desc" })
       .exec();
 
-    if (!categorizedListings.length) {
-      return res.status(200).json({ categorizedListings: [], totalPages: 0 });
+    if (categorizedListings.length == 0) {
+      return res.status(400).json({ message: "Nothing more to load" });
     }
-    const totalPages = Math.ceil(categorizedListings.length / limit);
-    res.status(200).json({ categorizedListings, totalPages });
+
+    res.status(200).json({ categorizedListings });
   } catch (error) {
     next(error);
   }
