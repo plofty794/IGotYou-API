@@ -32,3 +32,11 @@ export const reAttemptBookingRequestLimiter = rateLimit({
     error: "You've reached your daily limit. Try again tomorrow.",
   },
 });
+
+export const sendRequestPayoutLimiter = rateLimit({
+  windowMs: 60000 * 10,
+  limit: 2,
+  message: {
+    error: "Payout request limit reached, try again after 10 minutes.",
+  },
+});

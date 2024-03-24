@@ -550,30 +550,6 @@ export const rateUser: RequestHandler = async (req, res, next) => {
       );
     }
 
-    const hostRatingExist = await Ratings.findOne({
-      reservationID,
-      hostID,
-      guestID,
-      hostFeedback: req.body.hostFeedback,
-      hostRating: req.body.hostRating,
-    });
-
-    if (hostRatingExist) {
-      throw createHttpError(400, "You've already rated this guest.");
-    }
-
-    const guestRatingExist = await Ratings.findOne({
-      reservationID,
-      hostID,
-      guestID,
-      guestFeedback: req.body.guestFeedback,
-      guestRating: req.body.guestRating,
-    });
-
-    if (guestRatingExist) {
-      throw createHttpError(400, "You've already rated this host.");
-    }
-
     const reservationOngoing = await Reservations.findOne({
       _id: reservationID,
       confirmServiceEnded: false,
@@ -584,6 +560,34 @@ export const rateUser: RequestHandler = async (req, res, next) => {
         400,
         "Ratings takes effect once the guest marks it as complete."
       );
+    }
+
+    const ratingExist = await Ratings.findOne({
+      hostID,
+      guestID,
+      reservationID,
+    });
+
+    if (ratingExist) {
+      await ratingExist.updateOne({
+        ...req.body,
+      });
+
+      if (req.body.guestFeedback) {
+        await Users.findByIdAndUpdate(hostID, {
+          $push: {
+            rating: [ratingExist._id],
+          },
+        });
+      } else {
+        await Users.findByIdAndUpdate(guestID, {
+          $push: {
+            rating: [ratingExist._id],
+          },
+        });
+      }
+
+      return res.status(200).json({ message: "Service review has been sent." });
     }
 
     const newRating = await Ratings.create({

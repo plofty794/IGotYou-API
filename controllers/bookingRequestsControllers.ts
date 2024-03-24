@@ -129,6 +129,7 @@ export const sendBookingRequest: RequestHandler = async (req, res, next) => {
     const hasReservation = await Reservations.findOne({
       hostID,
       listingID,
+      confirmServiceEnded: false,
       $and: [
         {
           bookingStartsAt: { $lte: requestedBookingDateEndsAt },

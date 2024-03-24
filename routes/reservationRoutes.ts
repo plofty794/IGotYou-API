@@ -14,6 +14,7 @@ import {
   updatePendingServicePayment,
 } from "../controllers/reservationControllers";
 import { authToken } from "../middlewares/authToken";
+import { sendRequestPayoutLimiter } from "../utils/limiters";
 
 const router = Router();
 
@@ -45,6 +46,7 @@ router.post(
 router.post(
   "/reservations/request-service-payout/:reservationID",
   authToken,
+  sendRequestPayoutLimiter,
   sendRequestPayout
 );
 router.patch(

@@ -121,6 +121,7 @@ export const getPreviousReservations: RequestHandler = async (
       bookingEndsAt: {
         $lt: new Date().setHours(0, 0, 0, 0),
       },
+      confirmServiceEnded: true,
     })
       .populate([
         { path: "guestID", select: "username email" },
@@ -156,14 +157,25 @@ export const getReservations: RequestHandler = async (req, res, next) => {
 
     await Reservations.updateMany(
       {
-        bookingEndsAt: {
-          $lt: new Date().setHours(0, 0, 0, 0),
-        },
         status: "ongoing",
-        confirmServiceEnded: false,
+
+        $or: [
+          {
+            bookingEndsAt: {
+              $lt: new Date().setHours(0, 0, 0, 0),
+            },
+          },
+          {
+            confirmServiceEnded: false,
+          },
+          {
+            confirmServiceEnded: true,
+          },
+        ],
       },
       {
         status: "completed",
+        confirmServiceEnded: true,
       }
     );
 
@@ -449,10 +461,14 @@ export const requestServiceCancellation: RequestHandler = async (
       );
     }
 
-    const reservation = await BookingRequests.findOne({ reservationID });
+    const reservation = await Reservations.findById(reservationID);
 
     if (!reservation) {
       throw createHttpError(400, "No reservation with that ID");
+    }
+
+    if (reservation.confirmServiceEnded) {
+      throw createHttpError(400, "Service is already marked as completed.");
     }
 
     const alreadySentCancellationRequest = await BookingRequests.findOne({
@@ -637,11 +653,12 @@ export const confirmServiceEnded: RequestHandler = async (req, res, next) => {
 export const sendRequestPayout: RequestHandler = async (req, res, next) => {
   const id = req.cookies["_&!d"];
   const { reservationID } = req.params;
+  const { mobilePhone } = req.body;
   const transport = createTransport({
     service: "gmail",
     auth: {
-      user: env.ADMIN_EMAIL,
-      pass: env.APP_PASSWORD,
+      user: env.ADMIN_EMAIL_PAYOUTS,
+      pass: env.PAYOUTS_PASSWORD,
     },
   });
   try {
@@ -672,7 +689,7 @@ export const sendRequestPayout: RequestHandler = async (req, res, next) => {
       subject: `Service Payout Request for ${
         (reservation.listingID as { serviceTitle: string }).serviceTitle
       }`,
-      to: env.ADMIN_EMAIL,
+      to: env.ADMIN_EMAIL_PAYOUTS,
       html: emailRequestPayout(
         (reservation.listingID as { serviceTitle: string }).serviceTitle,
         [
@@ -681,7 +698,8 @@ export const sendRequestPayout: RequestHandler = async (req, res, next) => {
         ],
         (reservation.guestID as { username: string }).username,
         reservation.paymentAmount,
-        (reservation.hostID as { username: string }).username
+        (reservation.hostID as { username: string }).username,
+        mobilePhone
       ),
     });
 

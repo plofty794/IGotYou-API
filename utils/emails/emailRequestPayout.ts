@@ -3,7 +3,8 @@ export const emailRequestPayout = (
   serviceDate: string[],
   guestName: string,
   amount: number,
-  hostName: string
+  hostName: string,
+  mobilePhone: string
 ) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" lang="en">
 <head>
@@ -41,6 +42,7 @@ export const emailRequestPayout = (
       <li><strong>Service Date:</strong> ${serviceDate[0]} - ${serviceDate[1]}</li>
       <li><strong>Guest Name:</strong> ${guestName}</li>
       <li><strong>Total Amount:</strong> ${amount}</li>
+      <li><strong>Mobile Phone:</strong> ${mobilePhone}</li>
     </ul>
     <p>I have attached any necessary documentation to support this request. Please process the payout at your earliest convenience.</p>
     <hr style="width:100%;border:none;border-top:1px solid #eaeaea;border-color:#e6ebf1;margin:20px 0" />

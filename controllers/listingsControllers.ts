@@ -72,7 +72,7 @@ export const getHostListings: RequestHandler = async (req, res, next) => {
     const totalPages = Math.ceil(hostListings.length / limit);
 
     if (hostListings.length == 0) {
-      return res.status(400).json({ message: "Nothing more to load" });
+      return res.status(200).json({ hostListings: [], totalPages: 0 });
     }
 
     res.status(200).json({ hostListings, totalPages });
@@ -242,6 +242,10 @@ export const getUserListing: RequestHandler = async (req, res, next) => {
       },
       {
         path: "reservedDates",
+        match: {
+          confirmServiceEnded: false,
+        },
+        select: "bookingStartsAt bookingEndsAt",
       },
     ]);
     res.status(200).json({ listing });

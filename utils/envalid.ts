@@ -16,5 +16,7 @@ export default cleanEnv(process.env, {
   ADMIN_EMAIL: email(),
   ADMIN_EMAIL_FEEDBACK: email(),
   FEEDBACK_PASSWORD: str(),
+  ADMIN_EMAIL_PAYOUTS: email(),
+  PAYOUTS_PASSWORD: str(),
   CADDY_CLIENT_PATH: str(),
 });
