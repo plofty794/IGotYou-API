@@ -498,7 +498,7 @@ export const sendMessageToGuest: RequestHandler = async (req, res, next) => {
     );
 
     await GuestNotifications.findOneAndUpdate(
-      { senderID: id, recipientID: guestID },
+      { senderID: id, recipientID: guestID, notificationType: "New-Message" },
       {
         data: lastMessage?._id,
         read: false,
