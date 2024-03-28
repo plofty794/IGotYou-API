@@ -47,11 +47,6 @@ const reportSchema = new Schema(
       type: evidenceSchema,
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["pending", "resolved"],
-      default: "pending",
-    },
   },
   { timestamps: true }
 );

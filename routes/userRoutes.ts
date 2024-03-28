@@ -24,11 +24,13 @@ import {
   getGuestReviews,
   submitReport,
   writeFeedback,
+  reportedUser,
 } from "../controllers/usersControllers";
 import { verifyUserUpdates } from "../middlewares/verifyUserUpdates";
 import { authToken } from "../middlewares/authToken";
 import { passwordResetLimiter } from "../utils/limiters";
 
+router.get("/users/reported-user/:email", reportedUser);
 router.get("/users/current-user/phone", authToken, getUserPhone);
 router.get("/users/current-user/profile", authToken, getCurrentUserProfile);
 router.get("/users/current-user/wishlists", authToken, getWishlists);

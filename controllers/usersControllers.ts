@@ -813,3 +813,32 @@ export const writeFeedback: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const reportedUser: RequestHandler = async (req, res, next) => {
+  const { email } = req.params;
+  try {
+    if (!email) {
+      throw createHttpError(
+        400,
+        "A identifier is required to access this resource."
+      );
+    }
+
+    const user = await Users.findOne({ email });
+
+    if (!user) {
+      throw createHttpError(400, "Error");
+    }
+
+    const reportedUser = await Reports.find({
+      reportedUser: user._id,
+    }).populate({
+      select: "reports",
+      path: "reportedUser",
+    });
+
+    res.status(200).json({ reportedUser });
+  } catch (error) {
+    next(error);
+  }
+};
